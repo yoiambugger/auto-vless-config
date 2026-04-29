@@ -2,7 +2,6 @@ import requests
 import urllib.parse
 import json
 
-# Твои источники
 SOURCES = [
     "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-all.txt",
     "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-9.txt",
@@ -40,6 +39,20 @@ def parse_vless_link(link, index):
         network_type = params.get("type", "tcp")
         security_type = params.get("security", "none")
 
+        # ЖЕСТКИЙ ФИЛЬТР: если Reality без ключа - это сломает ядро, выкидываем
+        if security_type == "reality" and not params.get("pbk"):
+            return None
+
+        user = {
+            "id": uuid,
+            "encryption": params.get("encryption", "none")
+        }
+
+        # ЖЕСТКИЙ ФИЛЬТР: Flow разрешен только на TCP. Иначе краш ядра.
+        flow = params.get("flow", "")
+        if flow and network_type == "tcp":
+            user["flow"] = flow
+
         outbound = {
             "tag": f"proxy_{index}",
             "protocol": "vless",
@@ -47,11 +60,7 @@ def parse_vless_link(link, index):
                 "vnext": [{
                     "address": address,
                     "port": int(port),
-                    "users": [{
-                        "id": uuid,
-                        "encryption": params.get("encryption", "none"),
-                        "flow": params.get("flow", "")
-                    }]
+                    "users": [user]
                 }]
             },
             "streamSettings": {
@@ -60,33 +69,37 @@ def parse_vless_link(link, index):
             }
         }
 
-        # 1. Настройки безопасности (TLS или REALITY)
+        # 1. Настройки безопасности
         if security_type == "reality":
             outbound["streamSettings"]["realitySettings"] = {
-                "serverName": params.get("sni", ""),
+                "serverName": params.get("sni", address), # Если нет SNI, ставим IP
                 "publicKey": params.get("pbk", ""),
                 "shortId": params.get("sid", ""),
                 "fingerprint": params.get("fp", "chrome"),
-                "spiderX": params.get("spx", "/"),
-                "show": False
+                "spiderX": params.get("spx", "/")
             }
         elif security_type == "tls":
             outbound["streamSettings"]["tlsSettings"] = {
-                "serverName": params.get("sni", params.get("host", "")),
+                "serverName": params.get("sni", params.get("host", address)),
                 "fingerprint": params.get("fp", "chrome")
             }
+            alpn = params.get("alpn", "")
+            if alpn:
+                outbound["streamSettings"]["tlsSettings"]["alpn"] = alpn.split(',')
 
-        # 2. Настройки транспорта (WS, GRPC, TCP)
+        # 2. Настройки транспорта
         if network_type == "ws":
             outbound["streamSettings"]["wsSettings"] = {
                 "path": params.get("path", "/"),
                 "headers": {
-                    "Host": params.get("host", params.get("sni", ""))
+                    "Host": params.get("host", params.get("sni", address))
                 }
             }
         elif network_type == "grpc":
+            # Ищем имя сервиса либо в serviceName, либо в path
+            service_name = params.get("serviceName", params.get("path", ""))
             outbound["streamSettings"]["grpcSettings"] = {
-                "serviceName": params.get("serviceName", ""),
+                "serviceName": service_name,
                 "multiMode": params.get("mode", "multi") == "multi"
             }
         elif network_type == "tcp":
@@ -100,7 +113,7 @@ def parse_vless_link(link, index):
                         }
                     }
                 }
-            
+        
         return outbound
     except Exception:
         return None
@@ -139,6 +152,9 @@ def main():
         end_idx = start_idx + CHUNK_SIZE
         chunk_outbounds = valid_outbounds[start_idx:end_idx]
         
+        if not chunk_outbounds:
+            continue
+            
         server_number = chunk_idx + 1
         
         config_profile = {
