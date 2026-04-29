@@ -3075,29 +3075,6 @@
         }
       },
       {
-        "tag": "proxy_104",
-        "protocol": "vless",
-        "settings": {
-          "vnext": [
-            {
-              "address": "178.72.181.132",
-              "port": 52006,
-              "users": [
-                {
-                  "id": "75807638-6f19-01f4-ae08-38492ee85c88",
-                  "encryption": "none",
-                  "flow": "xtls-rprx-vision"
-                }
-              ]
-            }
-          ]
-        },
-        "streamSettings": {
-          "network": "raw",
-          "security": "tls"
-        }
-      },
-      {
         "tag": "proxy_105",
         "protocol": "vless",
         "settings": {
@@ -5202,7 +5179,7 @@
         },
         "streamSettings": {
           "network": "ws",
-          "security": "false"
+          "security": "none"
         }
       },
       {
@@ -7155,6 +7132,36 @@
         }
       },
       {
+        "tag": "proxy_254",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "176.124.211.23",
+              "port": 8446,
+              "users": [
+                {
+                  "id": "6bdd3bf2-2b8a-4b0c-b7c7-5a243a7aaeda",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "reality",
+          "realitySettings": {
+            "serverName": "jobinvest.ru",
+            "publicKey": "SbVKOEMjK0sIlbwg4akyBg5mL5KZwwB-ed4eEE7YnRc",
+            "shortId": "",
+            "fingerprint": "qq",
+            "show": false
+          }
+        }
+      },
+      {
         "tag": "direct",
         "protocol": "freedom"
       },
@@ -7321,36 +7328,6 @@
       ]
     },
     "outbounds": [
-      {
-        "tag": "proxy_254",
-        "protocol": "vless",
-        "settings": {
-          "vnext": [
-            {
-              "address": "176.124.211.23",
-              "port": 8446,
-              "users": [
-                {
-                  "id": "6bdd3bf2-2b8a-4b0c-b7c7-5a243a7aaeda",
-                  "encryption": "none",
-                  "flow": "xtls-rprx-vision"
-                }
-              ]
-            }
-          ]
-        },
-        "streamSettings": {
-          "network": "tcp",
-          "security": "reality",
-          "realitySettings": {
-            "serverName": "jobinvest.ru",
-            "publicKey": "SbVKOEMjK0sIlbwg4akyBg5mL5KZwwB-ed4eEE7YnRc",
-            "shortId": "",
-            "fingerprint": "qq",
-            "show": false
-          }
-        }
-      },
       {
         "tag": "proxy_255",
         "protocol": "vless",
@@ -9043,7 +9020,7 @@
         },
         "streamSettings": {
           "network": "ws",
-          "security": "false"
+          "security": "none"
         }
       },
       {
