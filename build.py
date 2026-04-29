@@ -1,69 +1,65 @@
 import requests
 import urllib.parse
 import json
-import time
 
 # Твои источники
 SOURCES = [
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-all.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-9.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-8.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-7.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-6.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-5.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-4.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-3.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-2.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-12.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-11.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-10.txt",
-    "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-1.txt"
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/clean/vless.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/ru-sni-local/vless.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/ru-sni/vless.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_001.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_002.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_003.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_004.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_005.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_006.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_007.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_008.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_009.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_010.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_011.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_012.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_013.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_014.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_015.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_016.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_017.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_018.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_019.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_020.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_021.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_022.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_023.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_024.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_025.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_026.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_027.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_028.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_029.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_030.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_031.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_032.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_033.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_034.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_035.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_036.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_037.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_038.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_039.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_040.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_041.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_042.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_043.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_044.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_045.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_046.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_047.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_048.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_049.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/refs/heads/main/githubmirror/new/by_protocol/vless/vless_050.txt"
 ]
 
 CHUNK_SIZE = 250 # Количество серверов внутри одного балансировщика
-
-def get_non_ru_links(unique_links):
-    print(f"Начинаем проверку локаций для {len(unique_links)} серверов. Удаляем RU...")
-    safe_links = []
-    
-    # Разбиваем на пачки по 100 для API
-    for i in range(0, len(unique_links), 100):
-        chunk = unique_links[i:i+100]
-        batch_data = []
-        
-        for link in chunk:
-            try:
-                # Вытаскиваем IP или домен из ссылки
-                address = link[8:].split('@')[1].split(':')[0]
-                batch_data.append({"query": address})
-            except:
-                batch_data.append({"query": "127.0.0.1"}) # заглушка если не удалось распарсить
-        
-        try:
-            # Отправляем пачку на проверку в ip-api
-            resp = requests.post("http://ip-api.com/batch", json=batch_data, timeout=10).json()
-            
-            for j, res in enumerate(resp):
-                address = batch_data[j]["query"]
-                
-                # Быстрый сброс по домену
-                if address.endswith('.ru'):
-                    continue
-                    
-                # Сброс по ответу от геолокации
-                if res.get("status") == "success" and res.get("countryCode") == "RU":
-                    continue
-                
-                # Если всё чисто, добавляем в белый список
-                safe_links.append(chunk[j])
-        except Exception as e:
-            print(f"Ошибка API (пропускаем фильтрацию для пачки): {e}")
-            safe_links.extend(chunk) # В случае ошибки API просто оставляем как есть
-            
-        time.sleep(1.5) # Пауза чтобы бесплатный API не забанил нас
-        
-    print(f"Осталось зарубежных серверов: {len(safe_links)}")
-    return safe_links
 
 def parse_vless_link(link, index):
     try:
@@ -82,7 +78,7 @@ def parse_vless_link(link, index):
         params = dict(urllib.parse.parse_qsl(query_string))
 
         outbound = {
-            "tag": f"proxy_{index}", 
+            "tag": f"proxy_{index}", # Уникальный тег для каждого прокси
             "protocol": "vless",
             "settings": {
                 "vnext": [{
@@ -137,9 +133,6 @@ def main():
     unique_links = list(unique_links_dict.values())
     print(f"Найдено уникальных ссылок: {len(unique_links)}")
 
-    # ---> ФИЛЬТРАЦИЯ РОССИЙСКИХ СЕРВЕРОВ <---
-    unique_links = get_non_ru_links(unique_links)
-
     # 3. Парсим в JSON объекты
     valid_outbounds = []
     for i, link in enumerate(unique_links):
@@ -147,7 +140,7 @@ def main():
         if parsed:
             valid_outbounds.append(parsed)
 
-    # 4. Фасуем по чанкам
+    # 4. Фасуем по чанкам (например, по 250 штук) и собираем массив конфигов
     configs_array = []
     total_chunks = (len(valid_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
 
@@ -158,6 +151,7 @@ def main():
         
         server_number = chunk_idx + 1
         
+        # Собираем отдельный профиль-балансировщик
         config_profile = {
             "remarks": f"🇲🇦 🗽 LTE {server_number} | @telegaproxys",
             "observatory": {
@@ -208,10 +202,12 @@ def main():
             }
         }
         
+        # Добавляем профиль в общий массив
         configs_array.append(config_profile)
 
-    # 5. Сохраняем
+    # 5. Сохраняем весь массив в ОДИН файл
     with open("custom_sub.json", "w", encoding="utf-8") as f:
+        # indent=2 делает файл красивым и читаемым, как в твоем примере
         json.dump(configs_array, f, indent=2, ensure_ascii=False)
         print(f"Готово! Создан custom_sub.json, внутри {len(configs_array)} серверов.")
 
