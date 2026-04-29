@@ -53,6 +53,21 @@ def parse_vless_link(link, index):
         address, port = server_port.split(':', 1)
         params = dict(urllib.parse.parse_qsl(query_string))
 
+        network = params.get("type", "tcp")
+        security = params.get("security", "none")
+
+        # --- АНТИ-КРАШ ФИЛЬТР ---
+        # Выкидываем сервера с неизвестной сетью
+        if network not in ["tcp", "ws", "grpc", "kcp", "http", "httpupgrade", "xhttp"]:
+            return None
+
+        # Исправляем частую ошибку security=false или выкидываем неизвестные протоколы
+        if security == "false":
+            security = "none"
+        elif security not in ["none", "tls", "reality"]:
+            return None
+        # ------------------------
+
         outbound = {
             "tag": f"proxy_{index}", 
             "protocol": "vless",
@@ -68,12 +83,12 @@ def parse_vless_link(link, index):
                 }]
             },
             "streamSettings": {
-                "network": params.get("type", "tcp"),
-                "security": params.get("security", "none")
+                "network": network,
+                "security": security
             }
         }
 
-        if params.get("security") == "reality":
+        if security == "reality":
             outbound["streamSettings"]["realitySettings"] = {
                 "serverName": params.get("sni", ""),
                 "publicKey": params.get("pbk", ""),
@@ -151,7 +166,7 @@ def main():
                     },
                     {
                         "type": "field",
-                        "domain": DIRECT_DOMAINS, # <--- Наш список исключений
+                        "domain": DIRECT_DOMAINS,
                         "outboundTag": "direct"
                     },
                     {
