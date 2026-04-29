@@ -2,8 +2,8 @@ name: Update VLESS Config
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # Запуск каждые 6 часов
-  workflow_dispatch: # Позволяет запускать кнопку вручную
+    - cron: '0 */6 * * *' # Автоматический запуск каждые 6 часов
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой "Run workflow"
 
 jobs:
   build:
@@ -30,6 +30,6 @@ jobs:
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git add config.json
-        git commit -m "Авто-обновление конфига 🇲🇦 🗽 LTE | @telegaproxys" || echo "Изменений нет"
+        git add custom_sub.json
+        git commit -m "Авто-обновление конфигов 🇲🇦 🗽 LTE | @telegaproxys" || echo "Изменений нет"
         git push
