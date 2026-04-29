@@ -1,7 +1,9 @@
 import requests
 import urllib.parse
 import json
+import time
 
+# Твои источники
 SOURCES = [
     "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-all.txt",
     "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-9.txt",
@@ -18,7 +20,50 @@ SOURCES = [
     "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-1.txt"
 ]
 
-CHUNK_SIZE = 250 
+CHUNK_SIZE = 250 # Количество серверов внутри одного балансировщика
+
+def get_non_ru_links(unique_links):
+    print(f"Начинаем проверку локаций для {len(unique_links)} серверов. Удаляем RU...")
+    safe_links = []
+    
+    # Разбиваем на пачки по 100 для API
+    for i in range(0, len(unique_links), 100):
+        chunk = unique_links[i:i+100]
+        batch_data = []
+        
+        for link in chunk:
+            try:
+                # Вытаскиваем IP или домен из ссылки
+                address = link[8:].split('@')[1].split(':')[0]
+                batch_data.append({"query": address})
+            except:
+                batch_data.append({"query": "127.0.0.1"}) # заглушка если не удалось распарсить
+        
+        try:
+            # Отправляем пачку на проверку в ip-api
+            resp = requests.post("http://ip-api.com/batch", json=batch_data, timeout=10).json()
+            
+            for j, res in enumerate(resp):
+                address = batch_data[j]["query"]
+                
+                # Быстрый сброс по домену
+                if address.endswith('.ru'):
+                    continue
+                    
+                # Сброс по ответу от геолокации
+                if res.get("status") == "success" and res.get("countryCode") == "RU":
+                    continue
+                
+                # Если всё чисто, добавляем в белый список
+                safe_links.append(chunk[j])
+        except Exception as e:
+            print(f"Ошибка API (пропускаем фильтрацию для пачки): {e}")
+            safe_links.extend(chunk) # В случае ошибки API просто оставляем как есть
+            
+        time.sleep(1.5) # Пауза чтобы бесплатный API не забанил нас
+        
+    print(f"Осталось зарубежных серверов: {len(safe_links)}")
+    return safe_links
 
 def parse_vless_link(link, index):
     try:
@@ -36,98 +81,51 @@ def parse_vless_link(link, index):
         address, port = server_port.split(':', 1)
         params = dict(urllib.parse.parse_qsl(query_string))
 
-        network_type = params.get("type", "tcp")
-        security_type = params.get("security", "none")
-
-        # ЖЕСТКИЙ ФИЛЬТР: если Reality без ключа - это сломает ядро, выкидываем
-        if security_type == "reality" and not params.get("pbk"):
-            return None
-
-        user = {
-            "id": uuid,
-            "encryption": params.get("encryption", "none")
-        }
-
-        # ЖЕСТКИЙ ФИЛЬТР: Flow разрешен только на TCP. Иначе краш ядра.
-        flow = params.get("flow", "")
-        if flow and network_type == "tcp":
-            user["flow"] = flow
-
         outbound = {
-            "tag": f"proxy_{index}",
+            "tag": f"proxy_{index}", 
             "protocol": "vless",
             "settings": {
                 "vnext": [{
                     "address": address,
                     "port": int(port),
-                    "users": [user]
+                    "users": [{
+                        "id": uuid,
+                        "encryption": params.get("encryption", "none"),
+                        "flow": params.get("flow", "")
+                    }]
                 }]
             },
             "streamSettings": {
-                "network": network_type,
-                "security": security_type
+                "network": params.get("type", "tcp"),
+                "security": params.get("security", "none")
             }
         }
 
-        # 1. Настройки безопасности
-        if security_type == "reality":
+        if params.get("security") == "reality":
             outbound["streamSettings"]["realitySettings"] = {
-                "serverName": params.get("sni", address), # Если нет SNI, ставим IP
+                "serverName": params.get("sni", ""),
                 "publicKey": params.get("pbk", ""),
                 "shortId": params.get("sid", ""),
                 "fingerprint": params.get("fp", "chrome"),
-                "spiderX": params.get("spx", "/")
+                "show": False
             }
-        elif security_type == "tls":
-            outbound["streamSettings"]["tlsSettings"] = {
-                "serverName": params.get("sni", params.get("host", address)),
-                "fingerprint": params.get("fp", "chrome")
-            }
-            alpn = params.get("alpn", "")
-            if alpn:
-                outbound["streamSettings"]["tlsSettings"]["alpn"] = alpn.split(',')
-
-        # 2. Настройки транспорта
-        if network_type == "ws":
-            outbound["streamSettings"]["wsSettings"] = {
-                "path": params.get("path", "/"),
-                "headers": {
-                    "Host": params.get("host", params.get("sni", address))
-                }
-            }
-        elif network_type == "grpc":
-            # Ищем имя сервиса либо в serviceName, либо в path
-            service_name = params.get("serviceName", params.get("path", ""))
-            outbound["streamSettings"]["grpcSettings"] = {
-                "serviceName": service_name,
-                "multiMode": params.get("mode", "multi") == "multi"
-            }
-        elif network_type == "tcp":
-            header_type = params.get("headerType", "none")
-            if header_type == "http":
-                outbound["streamSettings"]["tcpSettings"] = {
-                    "header": {
-                        "type": "http",
-                        "request": {
-                            "path": [params.get("path", "/")]
-                        }
-                    }
-                }
-        
+            
         return outbound
     except Exception:
         return None
 
 def main():
     raw_links = []
+    # 1. Скачиваем все
     for url in SOURCES:
         try:
             resp = requests.get(url)
             if resp.status_code == 200:
                 raw_links.extend(resp.text.splitlines())
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Ошибка загрузки {url}: {e}")
 
+    # 2. Удаляем дубликаты
     unique_links_dict = {}
     for link in raw_links:
         link = link.strip()
@@ -137,13 +135,19 @@ def main():
                 unique_links_dict[core_link] = link
                 
     unique_links = list(unique_links_dict.values())
-    
+    print(f"Найдено уникальных ссылок: {len(unique_links)}")
+
+    # ---> ФИЛЬТРАЦИЯ РОССИЙСКИХ СЕРВЕРОВ <---
+    unique_links = get_non_ru_links(unique_links)
+
+    # 3. Парсим в JSON объекты
     valid_outbounds = []
     for i, link in enumerate(unique_links):
         parsed = parse_vless_link(link, i)
         if parsed:
             valid_outbounds.append(parsed)
 
+    # 4. Фасуем по чанкам
     configs_array = []
     total_chunks = (len(valid_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
 
@@ -152,9 +156,6 @@ def main():
         end_idx = start_idx + CHUNK_SIZE
         chunk_outbounds = valid_outbounds[start_idx:end_idx]
         
-        if not chunk_outbounds:
-            continue
-            
         server_number = chunk_idx + 1
         
         config_profile = {
@@ -206,8 +207,10 @@ def main():
                 "queryStrategy": "IPIfNonMatch"
             }
         }
+        
         configs_array.append(config_profile)
 
+    # 5. Сохраняем
     with open("custom_sub.json", "w", encoding="utf-8") as f:
         json.dump(configs_array, f, indent=2, ensure_ascii=False)
         print(f"Готово! Создан custom_sub.json, внутри {len(configs_array)} серверов.")
