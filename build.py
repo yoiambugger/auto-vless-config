@@ -2,7 +2,7 @@ import requests
 import urllib.parse
 import json
 
-# Твои источники
+# Твои актуальные источники
 SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-SNI-RU-all.txt",
@@ -11,6 +11,31 @@ SOURCES = [
 ]
 
 CHUNK_SIZE = 250 # Количество серверов внутри одного балансировщика
+
+# Список сайтов, которые будут работать НАПРЯМУЮ, минуя VPN
+DIRECT_DOMAINS = [
+    "max.ru", "domain:2gis.ru", "domain:ads.x5.ru", "domain:2gis.com", 
+    "domain:aif.ru", "domain:aeroflot.ru", "domain:alfabank.ru", "domain:avito.ru", 
+    "domain:beeline.ru", "domain:burgerkingrus.ru", "domain:dellin.ru", "domain:drive2.ru", 
+    "domain:dzen.ru", "domain:flypobeda.ru", "domain:forbes.ru", "domain:gazeta.ru", 
+    "domain:gazprombank.ru", "domain:gismeteo.ru", "domain:gosuslugi.ru", "domain:hh.ru", 
+    "domain:kontur.ru", "domain:kontur.host", "domain:kp.ru", "domain:kuper.ru", 
+    "domain:lenta.ru", "domain:mail.ru", "domain:megamarket.ru", "domain:megamarket.tech", 
+    "domain:megafon.ru", "domain:moex.com", "domain:motivtelecom.ru", "domain:ozon.ru", 
+    "domain:pervye.ru", "domain:psbank.ru", "domain:rambler.ru", "domain:rambler-co.ru", 
+    "domain:rbc.ru", "domain:reg.ru", "domain:reviews.2gis.com", "domain:rg.ru", 
+    "domain:ria.ru", "domain:ruwiki.ru", "domain:rustore.ru", "domain:rutube.ru", 
+    "domain:rzd.ru", "domain:sirena-travel.ru", "domain:sravni.ru", "domain:t-j.ru", 
+    "domain:t2.ru", "domain:tank-online.com", "domain:taximaxim.ru", "domain:tbank-online.com", 
+    "domain:tildaapi.com", "domain:tns-counter.ru", "domain:trvl.yandex.net", "domain:tutu.ru", 
+    "domain:vk.com", "domain:vk.ru", "domain:vkvideo.ru", "domain:vtb.ru", "domain:x5.ru", 
+    "domain:ya.ru", "domain:yandex.ru", "domain:yandex.net", "domain:yandex.com", 
+    "domain:yastatic.net", "domain:yandexcloud.net", "full:go.yandex", "full:ru.ruwiki.ru", 
+    "domain:xn--90acagbhgpca7c8c7f.xn--p1ai", "domain:xn--80ajghhoc2aj1c8b.xn--p1ai", 
+    "domain:xn--90aivcdt6dxbc.xn--p1ai", "domain:xn--b1aew.xn--p1ai", "domain:api.oneme.ru", 
+    "domain:fd.oneme.ru", "domain:i.oneme.ru", "domain:miniapps.max.ru", 
+    "domain:sdk-api.apptracer.ru", "domain:st.max.ru", "domain:tracker-api.vk-analytics.ru"
+]
 
 def parse_vless_link(link, index):
     try:
@@ -29,7 +54,7 @@ def parse_vless_link(link, index):
         params = dict(urllib.parse.parse_qsl(query_string))
 
         outbound = {
-            "tag": f"proxy_{index}", # Уникальный тег для каждого прокси
+            "tag": f"proxy_{index}", 
             "protocol": "vless",
             "settings": {
                 "vnext": [{
@@ -91,7 +116,7 @@ def main():
         if parsed:
             valid_outbounds.append(parsed)
 
-    # 4. Фасуем по чанкам (например, по 250 штук) и собираем массив конфигов
+    # 4. Фасуем по чанкам и собираем массив конфигов
     configs_array = []
     total_chunks = (len(valid_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
 
@@ -102,7 +127,6 @@ def main():
         
         server_number = chunk_idx + 1
         
-        # Собираем отдельный профиль-балансировщик
         config_profile = {
             "remarks": f"🇲🇦 🗽 LTE {server_number} | @telegaproxys",
             "observatory": {
@@ -123,6 +147,11 @@ def main():
                     {
                         "type": "field",
                         "protocol": ["bittorrent"],
+                        "outboundTag": "direct"
+                    },
+                    {
+                        "type": "field",
+                        "domain": DIRECT_DOMAINS, # <--- Наш список исключений
                         "outboundTag": "direct"
                     },
                     {
@@ -153,12 +182,10 @@ def main():
             }
         }
         
-        # Добавляем профиль в общий массив
         configs_array.append(config_profile)
 
     # 5. Сохраняем весь массив в ОДИН файл
     with open("custom_sub.json", "w", encoding="utf-8") as f:
-        # indent=2 делает файл красивым и читаемым, как в твоем примере
         json.dump(configs_array, f, indent=2, ensure_ascii=False)
         print(f"Готово! Создан custom_sub.json, внутри {len(configs_array)} серверов.")
 
