@@ -19,7 +19,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-1.txt"
 ]
 
-CHUNK_SIZE = 250 # Количество серверов внутри одного балансировщика
+CHUNK_SIZE = 250 
 
 def parse_vless_link(link, index):
     try:
@@ -37,8 +37,11 @@ def parse_vless_link(link, index):
         address, port = server_port.split(':', 1)
         params = dict(urllib.parse.parse_qsl(query_string))
 
+        network_type = params.get("type", "tcp")
+        security_type = params.get("security", "none")
+
         outbound = {
-            "tag": f"proxy_{index}", # Уникальный тег для каждого прокси
+            "tag": f"proxy_{index}",
             "protocol": "vless",
             "settings": {
                 "vnext": [{
@@ -52,19 +55,51 @@ def parse_vless_link(link, index):
                 }]
             },
             "streamSettings": {
-                "network": params.get("type", "tcp"),
-                "security": params.get("security", "none")
+                "network": network_type,
+                "security": security_type
             }
         }
 
-        if params.get("security") == "reality":
+        # 1. Настройки безопасности (TLS или REALITY)
+        if security_type == "reality":
             outbound["streamSettings"]["realitySettings"] = {
                 "serverName": params.get("sni", ""),
                 "publicKey": params.get("pbk", ""),
                 "shortId": params.get("sid", ""),
                 "fingerprint": params.get("fp", "chrome"),
+                "spiderX": params.get("spx", "/"),
                 "show": False
             }
+        elif security_type == "tls":
+            outbound["streamSettings"]["tlsSettings"] = {
+                "serverName": params.get("sni", params.get("host", "")),
+                "fingerprint": params.get("fp", "chrome")
+            }
+
+        # 2. Настройки транспорта (WS, GRPC, TCP)
+        if network_type == "ws":
+            outbound["streamSettings"]["wsSettings"] = {
+                "path": params.get("path", "/"),
+                "headers": {
+                    "Host": params.get("host", params.get("sni", ""))
+                }
+            }
+        elif network_type == "grpc":
+            outbound["streamSettings"]["grpcSettings"] = {
+                "serviceName": params.get("serviceName", ""),
+                "multiMode": params.get("mode", "multi") == "multi"
+            }
+        elif network_type == "tcp":
+            header_type = params.get("headerType", "none")
+            if header_type == "http":
+                outbound["streamSettings"]["tcpSettings"] = {
+                    "header": {
+                        "type": "http",
+                        "request": {
+                            "path": [params.get("path", "/")]
+                        }
+                    }
+                }
             
         return outbound
     except Exception:
@@ -72,16 +107,14 @@ def parse_vless_link(link, index):
 
 def main():
     raw_links = []
-    # 1. Скачиваем все
     for url in SOURCES:
         try:
             resp = requests.get(url)
             if resp.status_code == 200:
                 raw_links.extend(resp.text.splitlines())
-        except Exception as e:
-            print(f"Ошибка загрузки {url}: {e}")
+        except Exception:
+            pass
 
-    # 2. Удаляем дубликаты
     unique_links_dict = {}
     for link in raw_links:
         link = link.strip()
@@ -91,16 +124,13 @@ def main():
                 unique_links_dict[core_link] = link
                 
     unique_links = list(unique_links_dict.values())
-    print(f"Найдено уникальных ссылок: {len(unique_links)}")
-
-    # 3. Парсим в JSON объекты
+    
     valid_outbounds = []
     for i, link in enumerate(unique_links):
         parsed = parse_vless_link(link, i)
         if parsed:
             valid_outbounds.append(parsed)
 
-    # 4. Фасуем по чанкам (например, по 250 штук) и собираем массив конфигов
     configs_array = []
     total_chunks = (len(valid_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
 
@@ -111,7 +141,6 @@ def main():
         
         server_number = chunk_idx + 1
         
-        # Собираем отдельный профиль-балансировщик
         config_profile = {
             "remarks": f"🇲🇦 🗽 LTE {server_number} | @telegaproxys",
             "observatory": {
@@ -161,13 +190,9 @@ def main():
                 "queryStrategy": "IPIfNonMatch"
             }
         }
-        
-        # Добавляем профиль в общий массив
         configs_array.append(config_profile)
 
-    # 5. Сохраняем весь массив в ОДИН файл
     with open("custom_sub.json", "w", encoding="utf-8") as f:
-        # indent=2 делает файл красивым и читаемым, как в твоем примере
         json.dump(configs_array, f, indent=2, ensure_ascii=False)
         print(f"Готово! Создан custom_sub.json, внутри {len(configs_array)} серверов.")
 
