@@ -1,7 +1,6 @@
 import requests
 import urllib.parse
 import json
-import re
 
 # Твои источники
 SOURCES = [
@@ -20,7 +19,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/whoahaow/rjsxrd/refs/heads/main/githubmirror/bypass-unsecure/bypass-unsecure-1.txt"
 ]
 
-MAX_NODES = 150 # Совет: не делай больше 150-200, иначе пинг каждые 5 сек положит роутер/пк
+CHUNK_SIZE = 250 # Количество серверов внутри одного балансировщика
 
 def parse_vless_link(link, index):
     try:
@@ -28,7 +27,6 @@ def parse_vless_link(link, index):
         if not link.startswith("vless://"):
             return None
         
-        # Парсим основную часть и параметры
         main_part = link[8:].split('#')[0]
         if '?' in main_part:
             credentials, query_string = main_part.split('?', 1)
@@ -39,9 +37,8 @@ def parse_vless_link(link, index):
         address, port = server_port.split(':', 1)
         params = dict(urllib.parse.parse_qsl(query_string))
 
-        # Формируем outbound блок
         outbound = {
-            "tag": f"proxy_{index}",
+            "tag": f"proxy_{index}", # Уникальный тег для каждого прокси
             "protocol": "vless",
             "settings": {
                 "vnext": [{
@@ -60,7 +57,6 @@ def parse_vless_link(link, index):
             }
         }
 
-        # Если это Reality, добавляем настройки
         if params.get("security") == "reality":
             outbound["streamSettings"]["realitySettings"] = {
                 "serverName": params.get("sni", ""),
@@ -71,12 +67,12 @@ def parse_vless_link(link, index):
             }
             
         return outbound
-    except Exception as e:
+    except Exception:
         return None
 
 def main():
     raw_links = []
-    # 1. Собираем все ссылки
+    # 1. Скачиваем все
     for url in SOURCES:
         try:
             resp = requests.get(url)
@@ -85,76 +81,95 @@ def main():
         except Exception as e:
             print(f"Ошибка загрузки {url}: {e}")
 
-    # 2. Убираем дубликаты (используя set)
-    unique_links = list(set([link.strip() for link in raw_links if link.strip().startswith("vless://")]))
-    
-    outbounds = []
-    # 3. Парсим ссылки в JSON-объекты
+    # 2. Удаляем дубликаты
+    unique_links_dict = {}
+    for link in raw_links:
+        link = link.strip()
+        if link.startswith("vless://"):
+            core_link = link.split('#')[0] 
+            if core_link not in unique_links_dict:
+                unique_links_dict[core_link] = link
+                
+    unique_links = list(unique_links_dict.values())
+    print(f"Найдено уникальных ссылок: {len(unique_links)}")
+
+    # 3. Парсим в JSON объекты
+    valid_outbounds = []
     for i, link in enumerate(unique_links):
-        if len(outbounds) >= MAX_NODES:
-            break # Ограничиваем количество, чтобы не перегрузить ядро
         parsed = parse_vless_link(link, i)
         if parsed:
-            outbounds.append(parsed)
+            valid_outbounds.append(parsed)
 
-    # 4. Формируем финальный конфиг с Балансировщиком
-    config = {
-        "remarks": "🇲🇦 🗽 LTE | @telegaproxys",
-        "observatory": {
-            "subjectSelector": ["proxy_"], # Наблюдаем за всеми тегами, начинающимися на proxy_
-            "probeUrl": "https://www.google.com/generate_204",
-            "probeInterval": "5s" # Пинг каждые 5 секунд
-        },
-        "routing": {
-            "domainStrategy": "IPIfNonMatch",
-            "domainMatcher": "hybrid",
-            "balancers": [
-                {
-                    "tag": "best_ping_balancer",
-                    "selector": ["proxy_"],
-                    "strategy": {"type": "leastPing"} # Выбираем самый низкий пинг
-                }
+    # 4. Фасуем по чанкам (например, по 250 штук) и собираем массив конфигов
+    configs_array = []
+    total_chunks = (len(valid_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
+
+    for chunk_idx in range(total_chunks):
+        start_idx = chunk_idx * CHUNK_SIZE
+        end_idx = start_idx + CHUNK_SIZE
+        chunk_outbounds = valid_outbounds[start_idx:end_idx]
+        
+        server_number = chunk_idx + 1
+        
+        # Собираем отдельный профиль-балансировщик
+        config_profile = {
+            "remarks": f"🇲🇦 🗽 LTE {server_number} | @telegaproxys",
+            "observatory": {
+                "subjectSelector": ["proxy_"], 
+                "probeUrl": "https://www.google.com/generate_204",
+                "probeInterval": "10s"
+            },
+            "routing": {
+                "domainStrategy": "IPIfNonMatch",
+                "balancers": [
+                    {
+                        "tag": "best_ping_balancer",
+                        "selector": ["proxy_"],
+                        "strategy": {"type": "leastPing"} 
+                    }
+                ],
+                "rules": [
+                    {
+                        "type": "field",
+                        "protocol": ["bittorrent"],
+                        "outboundTag": "direct"
+                    },
+                    {
+                        "type": "field",
+                        "network": "tcp,udp",
+                        "balancerTag": "best_ping_balancer" 
+                    }
+                ]
+            },
+            "outbounds": chunk_outbounds + [
+                {"tag": "direct", "protocol": "freedom"},
+                {"tag": "block", "protocol": "blackhole"}
             ],
-            "rules": [
+            "inbounds": [
                 {
-                    "type": "field",
-                    "protocol": ["bittorrent"],
-                    "outboundTag": "direct"
+                    "tag": "socks", "port": 10808, "protocol": "socks",
+                    "settings": {"udp": True, "auth": "noauth"},
+                    "sniffing": {"enabled": True, "destOverride": ["http", "tls"]}
                 },
                 {
-                    "type": "field",
-                    "network": "tcp,udp",
-                    "balancerTag": "best_ping_balancer" # Пускаем трафик через балансировщик
+                    "tag": "http", "port": 10809, "protocol": "http",
+                    "settings": {"allowTransparent": False}
                 }
-            ]
-        },
-        "outbounds": outbounds + [
-            {"tag": "direct", "protocol": "freedom"},
-            {"tag": "block", "protocol": "blackhole"}
-        ],
-        "inbounds": [
-            {
-                "tag": "socks", "port": 10808, "listen": "127.0.0.1", "protocol": "socks",
-                "settings": {"udp": True, "auth": "noauth"},
-                "sniffing": {"enabled": True, "routeOnly": True, "destOverride": ["http", "tls", "quic"]}
-            },
-            {
-                "tag": "http", "port": 10809, "listen": "127.0.0.1", "protocol": "http",
-                "settings": {"allowTransparent": False},
-                "sniffing": {"enabled": True, "routeOnly": True, "destOverride": ["http", "tls", "quic"]}
+            ],
+            "dns": {
+                "servers": ["1.1.1.1", "1.0.0.1"],
+                "queryStrategy": "IPIfNonMatch"
             }
-        ],
-        "dns": {
-            "servers": ["https://8.8.8.8/dns-query"],
-            "queryStrategy": "UseIP"
         }
-    }
+        
+        # Добавляем профиль в общий массив
+        configs_array.append(config_profile)
 
-    # 5. Сохраняем в файл
-    with open("config.json", "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
-        print("Конфиг успешно собран! Сохранено нодов:", len(outbounds))
+    # 5. Сохраняем весь массив в ОДИН файл
+    with open("custom_sub.json", "w", encoding="utf-8") as f:
+        # indent=2 делает файл красивым и читаемым, как в твоем примере
+        json.dump(configs_array, f, indent=2, ensure_ascii=False)
+        print(f"Готово! Создан custom_sub.json, внутри {len(configs_array)} серверов.")
 
 if __name__ == "__main__":
     main()
-
