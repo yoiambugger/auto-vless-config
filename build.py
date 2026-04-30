@@ -10,7 +10,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt"
 ]
 
-CHUNK_SIZE = 250 # Количество серверов внутри одного балансировщика
+CHUNK_SIZE = 100 # Количество серверов внутри одного балансировщика (ОПТИМИЗИРОВАНО)
 
 # Список сайтов, которые будут работать НАПРЯМУЮ, минуя VPN
 DIRECT_DOMAINS = [
