@@ -57,11 +57,9 @@ def parse_vless_link(link, index):
         security = params.get("security", "none")
 
         # --- АНТИ-КРАШ ФИЛЬТР ---
-        # Выкидываем сервера с неизвестной сетью
         if network not in ["tcp", "ws", "grpc", "kcp", "http", "httpupgrade", "xhttp"]:
             return None
 
-        # Исправляем частую ошибку security=false или выкидываем неизвестные протоколы
         if security == "false":
             security = "none"
         elif security not in ["none", "tls", "reality"]:
@@ -131,14 +129,84 @@ def main():
         if parsed:
             valid_outbounds.append(parsed)
 
-    # 4. Фасуем по чанкам и собираем массив конфигов
     configs_array = []
-    total_chunks = (len(valid_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
+
+    # --- СОБИРАЕМ ТОПОВЫЙ ЗАРУБЕЖНЫЙ ПРОФИЛЬ ---
+    top_foreign_outbounds = []
+    remaining_outbounds = []
+
+    for out in valid_outbounds:
+        out_str = json.dumps(out).lower()
+        # Если нет ру-доменов и мы еще не набрали CHUNK_SIZE
+        if len(top_foreign_outbounds) < CHUNK_SIZE and ".ru" not in out_str and ".su" not in out_str and ".рф" not in out_str:
+            top_foreign_outbounds.append(out)
+        else:
+            remaining_outbounds.append(out)
+
+    if top_foreign_outbounds:
+        foreign_profile = {
+            "remarks": "🇲🇦 🗽 LTE | Зарубежный",
+            "observatory": {
+                "subjectSelector": ["proxy_"], 
+                "probeUrl": "https://www.google.com/generate_204",
+                "probeInterval": "10s"
+            },
+            "routing": {
+                "domainStrategy": "IPIfNonMatch",
+                "balancers": [
+                    {
+                        "tag": "best_ping_balancer",
+                        "selector": ["proxy_"],
+                        "strategy": {"type": "leastPing"} 
+                    }
+                ],
+                "rules": [
+                    {
+                        "type": "field",
+                        "protocol": ["bittorrent"],
+                        "outboundTag": "direct"
+                    },
+                    {
+                        "type": "field",
+                        "domain": DIRECT_DOMAINS,
+                        "outboundTag": "direct"
+                    },
+                    {
+                        "type": "field",
+                        "network": "tcp,udp",
+                        "balancerTag": "best_ping_balancer" 
+                    }
+                ]
+            },
+            "outbounds": top_foreign_outbounds + [
+                {"tag": "direct", "protocol": "freedom"},
+                {"tag": "block", "protocol": "blackhole"}
+            ],
+            "inbounds": [
+                {
+                    "tag": "socks", "port": 10808, "protocol": "socks",
+                    "settings": {"udp": True, "auth": "noauth"},
+                    "sniffing": {"enabled": True, "destOverride": ["http", "tls"]}
+                },
+                {
+                    "tag": "http", "port": 10809, "protocol": "http",
+                    "settings": {"allowTransparent": False}
+                }
+            ],
+            "dns": {
+                "servers": ["1.1.1.1", "1.0.0.1"],
+                "queryStrategy": "IPIfNonMatch"
+            }
+        }
+        configs_array.append(foreign_profile)
+
+    # 4. Фасуем ОСТАЛЬНЫЕ сервера по чанкам
+    total_chunks = (len(remaining_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
 
     for chunk_idx in range(total_chunks):
         start_idx = chunk_idx * CHUNK_SIZE
         end_idx = start_idx + CHUNK_SIZE
-        chunk_outbounds = valid_outbounds[start_idx:end_idx]
+        chunk_outbounds = remaining_outbounds[start_idx:end_idx]
         
         server_number = chunk_idx + 1
         
