@@ -91,9 +91,10 @@ def parse_vless_link(link, index_tag):
 def main():
     global_unique_cores = set()
     configs_array = []
+    main_parsed = [] # Сюда будем складывать всё, что не вошло в Резерв
 
     # ==========================================
-    # 1. ОБРАБОТКА РЕЗЕРВНОГО ИСТОЧНИКА (ТОП 50)
+    # 1. ОБРАБОТКА РЕЗЕРВНОГО ИСТОЧНИКА
     # ==========================================
     reserve_raw = []
     try:
@@ -113,9 +114,11 @@ def main():
                 parsed = parse_vless_link(link, "")
                 if parsed:
                     out_str = json.dumps(parsed).lower()
-                    # Только нерусские
+                    # Если нерусский — в резерв. Если русский — спасаем в общую кучу!
                     if ".ru" not in out_str and ".su" not in out_str and ".рф" not in out_str:
                         reserve_parsed.append(parsed)
+                    else:
+                        main_parsed.append(parsed)
 
     # Сортируем: Германия в приоритете
     def is_germany(out):
@@ -128,8 +131,9 @@ def main():
 
     # Забираем ровно 50
     top_reserve = reserve_parsed[:50]
-    # Все остальные улетят в общую массу серверов
+    # Все остальные нерусские, которые не влезли в 50, тоже спасаем в общую кучу
     leftover_reserve = reserve_parsed[50:]
+    main_parsed.extend(leftover_reserve)
 
     # Переписываем теги для Резерва
     for i, out in enumerate(top_reserve):
@@ -194,7 +198,7 @@ def main():
 
 
     # ==========================================
-    # 2. ОБРАБОТКА ОСТАЛЬНЫХ СЕРВЕРОВ (ПО 50 ШТ)
+    # 2. ОБРАБОТКА ОСТАЛЬНЫХ СЕРВЕРОВ
     # ==========================================
     raw_links = []
     for url in SOURCES:
@@ -204,9 +208,6 @@ def main():
                 raw_links.extend(resp.text.splitlines())
         except Exception as e:
             print(f"Ошибка загрузки {url}: {e}")
-
-    main_parsed = []
-    main_parsed.extend(leftover_reserve)
 
     for link in raw_links:
         link = link.strip()
