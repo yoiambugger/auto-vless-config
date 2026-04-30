@@ -10,7 +10,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt"
 ]
 
-CHUNK_SIZE = 200 # Количество серверов внутри одного балансировщика
+CHUNK_SIZE = 250 # Количество серверов внутри одного балансировщика
 
 # Список сайтов, которые будут работать НАПРЯМУЮ, минуя VPN
 DIRECT_DOMAINS = [
@@ -57,9 +57,11 @@ def parse_vless_link(link, index):
         security = params.get("security", "none")
 
         # --- АНТИ-КРАШ ФИЛЬТР ---
+        # Выкидываем сервера с неизвестной сетью
         if network not in ["tcp", "ws", "grpc", "kcp", "http", "httpupgrade", "xhttp"]:
             return None
 
+        # Исправляем частую ошибку security=false или выкидываем неизвестные протоколы
         if security == "false":
             security = "none"
         elif security not in ["none", "tls", "reality"]:
@@ -129,77 +131,8 @@ def main():
         if parsed:
             valid_outbounds.append(parsed)
 
+    # 4. Фасуем по чанкам и собираем массив конфигов
     configs_array = []
-
-    # --- СОБИРАЕМ ТЕЛЕГРАМ ПРОФИЛЬ (Нерусские по настройкам) ---
-    telegram_outbounds = []
-    for out in valid_outbounds:
-        # Переводим настройки сервера в текст и ищем ру-домены
-        out_str = json.dumps(out).lower()
-        if ".ru" not in out_str and ".su" not in out_str and ".рф" not in out_str:
-            telegram_outbounds.append(out)
-            # Ограничиваем до CHUNK_SIZE (200 шт)
-            if len(telegram_outbounds) == CHUNK_SIZE:
-                break
-
-    if telegram_outbounds:
-        telegram_profile = {
-            "remarks": "🇲🇦 🗽 LTE | Telegram",
-            "observatory": {
-                "subjectSelector": ["proxy_"], 
-                "probeUrl": "https://www.google.com/generate_204",
-                "probeInterval": "10s"
-            },
-            "routing": {
-                "domainStrategy": "IPIfNonMatch",
-                "balancers": [
-                    {
-                        "tag": "best_ping_balancer",
-                        "selector": ["proxy_"],
-                        "strategy": {"type": "leastPing"} 
-                    }
-                ],
-                "rules": [
-                    {
-                        "type": "field",
-                        "protocol": ["bittorrent"],
-                        "outboundTag": "direct"
-                    },
-                    {
-                        "type": "field",
-                        "domain": DIRECT_DOMAINS,
-                        "outboundTag": "direct"
-                    },
-                    {
-                        "type": "field",
-                        "network": "tcp,udp",
-                        "balancerTag": "best_ping_balancer" 
-                    }
-                ]
-            },
-            "outbounds": telegram_outbounds + [
-                {"tag": "direct", "protocol": "freedom"},
-                {"tag": "block", "protocol": "blackhole"}
-            ],
-            "inbounds": [
-                {
-                    "tag": "socks", "port": 10808, "protocol": "socks",
-                    "settings": {"udp": True, "auth": "noauth"},
-                    "sniffing": {"enabled": True, "destOverride": ["http", "tls"]}
-                },
-                {
-                    "tag": "http", "port": 10809, "protocol": "http",
-                    "settings": {"allowTransparent": False}
-                }
-            ],
-            "dns": {
-                "servers": ["1.1.1.1", "1.0.0.1"],
-                "queryStrategy": "IPIfNonMatch"
-            }
-        }
-        configs_array.append(telegram_profile)
-
-    # 4. Фасуем остальные сервера по чанкам
     total_chunks = (len(valid_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
 
     for chunk_idx in range(total_chunks):
