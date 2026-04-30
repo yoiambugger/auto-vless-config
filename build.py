@@ -12,7 +12,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt"
 ]
 
-CHUNK_SIZE = 200 # Количество серверов внутри одного балансировщика
+CHUNK_SIZE = 50 # <--- ОПТИМИЗАЦИЯ ДЛЯ МОБИЛОК (по 50 штук на профиль)
 
 # Список сайтов, которые будут работать НАПРЯМУЮ, минуя VPN
 DIRECT_DOMAINS = [
@@ -208,7 +208,7 @@ def main():
 
 
     # ==========================================
-    # 2. ОБРАБОТКА ОСТАЛЬНЫХ СЕРВЕРОВ (ПО 200 ШТ)
+    # 2. ОБРАБОТКА ОСТАЛЬНЫХ СЕРВЕРОВ (ПО 50 ШТ)
     # ==========================================
     raw_links = []
     for url in SOURCES:
