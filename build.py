@@ -2,16 +2,17 @@ import requests
 import urllib.parse
 import json
 
-# Твои актуальные источники
+# Тот самый источник для Резерва (Топ-50 нерусских, приоритет Германия)
+RESERVE_SOURCE = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt"
+
+# Остальные актуальные источники
 SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-SNI-RU-all.txt",
-    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt",
-    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt",
-    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-all.txt"
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt"
 ]
 
-CHUNK_SIZE = 100 # Количество серверов внутри одного балансировщика (ОПТИМИЗИРОВАНО)
+CHUNK_SIZE = 200 # Количество серверов внутри одного балансировщика
 
 # Список сайтов, которые будут работать НАПРЯМУЮ, минуя VPN
 DIRECT_DOMAINS = [
@@ -38,7 +39,7 @@ DIRECT_DOMAINS = [
     "domain:sdk-api.apptracer.ru", "domain:st.max.ru", "domain:tracker-api.vk-analytics.ru"
 ]
 
-def parse_vless_link(link, index):
+def parse_vless_link(link, index_tag):
     try:
         link = urllib.parse.unquote(link.strip())
         if not link.startswith("vless://"):
@@ -68,7 +69,7 @@ def parse_vless_link(link, index):
         # ------------------------
 
         outbound = {
-            "tag": f"proxy_{index}", 
+            "tag": index_tag, 
             "protocol": "vless",
             "settings": {
                 "vnext": [{
@@ -101,54 +102,58 @@ def parse_vless_link(link, index):
         return None
 
 def main():
-    raw_links = []
-    # 1. Скачиваем все
-    for url in SOURCES:
-        try:
-            resp = requests.get(url)
-            if resp.status_code == 200:
-                raw_links.extend(resp.text.splitlines())
-        except Exception as e:
-            print(f"Ошибка загрузки {url}: {e}")
-
-    # 2. Удаляем дубликаты
-    unique_links_dict = {}
-    for link in raw_links:
-        link = link.strip()
-        if link.startswith("vless://"):
-            core_link = link.split('#')[0] 
-            if core_link not in unique_links_dict:
-                unique_links_dict[core_link] = link
-                
-    unique_links = list(unique_links_dict.values())
-    print(f"Найдено уникальных ссылок: {len(unique_links)}")
-
-    # 3. Парсим в JSON объекты
-    valid_outbounds = []
-    for i, link in enumerate(unique_links):
-        parsed = parse_vless_link(link, i)
-        if parsed:
-            valid_outbounds.append(parsed)
-
+    global_unique_cores = set()
     configs_array = []
 
-    # --- СОБИРАЕМ ТОПОВЫЙ ЗАРУБЕЖНЫЙ ПРОФИЛЬ ---
-    top_foreign_outbounds = []
-    remaining_outbounds = []
+    # ==========================================
+    # 1. ОБРАБОТКА РЕЗЕРВНОГО ИСТОЧНИКА (ТОП 50)
+    # ==========================================
+    reserve_raw = []
+    try:
+        resp = requests.get(RESERVE_SOURCE)
+        if resp.status_code == 200:
+            reserve_raw = resp.text.splitlines()
+    except Exception as e:
+        print(f"Ошибка загрузки резервного источника: {e}")
 
-    for out in valid_outbounds:
+    reserve_parsed = []
+    for link in reserve_raw:
+        link = link.strip()
+        if link.startswith("vless://"):
+            core_link = link.split('#')[0]
+            if core_link not in global_unique_cores:
+                global_unique_cores.add(core_link)
+                # Пока ставим пустой тег, перезапишем позже
+                parsed = parse_vless_link(link, "")
+                if parsed:
+                    out_str = json.dumps(parsed).lower()
+                    # Только нерусские
+                    if ".ru" not in out_str and ".su" not in out_str and ".рф" not in out_str:
+                        reserve_parsed.append(parsed)
+
+    # Сортируем: Германия в приоритете
+    def is_germany(out):
         out_str = json.dumps(out).lower()
-        # Если нет ру-доменов и мы еще не набрали CHUNK_SIZE
-        if len(top_foreign_outbounds) < CHUNK_SIZE and ".ru" not in out_str and ".su" not in out_str and ".рф" not in out_str:
-            top_foreign_outbounds.append(out)
-        else:
-            remaining_outbounds.append(out)
+        if ".de" in out_str or "-de" in out_str or "germany" in out_str or "fra" in out_str or "frankfurt" in out_str:
+            return 1
+        return 0
 
-    if top_foreign_outbounds:
-        foreign_profile = {
-            "remarks": "🇲🇦 🗽 LTE | Зарубежный",
+    reserve_parsed.sort(key=is_germany, reverse=True)
+
+    # Забираем ровно 50
+    top_reserve = reserve_parsed[:50]
+    # Все остальные улетят в общую массу серверов
+    leftover_reserve = reserve_parsed[50:]
+
+    # Переписываем теги для Резерва
+    for i, out in enumerate(top_reserve):
+        out["tag"] = f"proxy_res_{i}"
+
+    if top_reserve:
+        reserve_profile = {
+            "remarks": "🇲🇦 🗽 LTE | Резерв",
             "observatory": {
-                "subjectSelector": ["proxy_"], 
+                "subjectSelector": ["proxy_res_"], 
                 "probeUrl": "https://www.google.com/generate_204",
                 "probeInterval": "10s"
             },
@@ -157,7 +162,7 @@ def main():
                 "balancers": [
                     {
                         "tag": "best_ping_balancer",
-                        "selector": ["proxy_"],
+                        "selector": ["proxy_res_"],
                         "strategy": {"type": "leastPing"} 
                     }
                 ],
@@ -179,7 +184,7 @@ def main():
                     }
                 ]
             },
-            "outbounds": top_foreign_outbounds + [
+            "outbounds": top_reserve + [
                 {"tag": "direct", "protocol": "freedom"},
                 {"tag": "block", "protocol": "blackhole"}
             ],
@@ -199,15 +204,44 @@ def main():
                 "queryStrategy": "IPIfNonMatch"
             }
         }
-        configs_array.append(foreign_profile)
+        configs_array.append(reserve_profile)
 
-    # 4. Фасуем ОСТАЛЬНЫЕ сервера по чанкам
-    total_chunks = (len(remaining_outbounds) + CHUNK_SIZE - 1) // CHUNK_SIZE 
+
+    # ==========================================
+    # 2. ОБРАБОТКА ОСТАЛЬНЫХ СЕРВЕРОВ (ПО 200 ШТ)
+    # ==========================================
+    raw_links = []
+    for url in SOURCES:
+        try:
+            resp = requests.get(url)
+            if resp.status_code == 200:
+                raw_links.extend(resp.text.splitlines())
+        except Exception as e:
+            print(f"Ошибка загрузки {url}: {e}")
+
+    main_parsed = []
+    main_parsed.extend(leftover_reserve)
+
+    for link in raw_links:
+        link = link.strip()
+        if link.startswith("vless://"):
+            core_link = link.split('#')[0] 
+            if core_link not in global_unique_cores:
+                global_unique_cores.add(core_link)
+                parsed = parse_vless_link(link, "")
+                if parsed:
+                    main_parsed.append(parsed)
+
+    # Переписываем теги для общей массы
+    for i, out in enumerate(main_parsed):
+        out["tag"] = f"proxy_{i}"
+
+    total_chunks = (len(main_parsed) + CHUNK_SIZE - 1) // CHUNK_SIZE 
 
     for chunk_idx in range(total_chunks):
         start_idx = chunk_idx * CHUNK_SIZE
         end_idx = start_idx + CHUNK_SIZE
-        chunk_outbounds = remaining_outbounds[start_idx:end_idx]
+        chunk_outbounds = main_parsed[start_idx:end_idx]
         
         server_number = chunk_idx + 1
         
@@ -268,7 +302,9 @@ def main():
         
         configs_array.append(config_profile)
 
-    # 5. Сохраняем весь массив в ОДИН файл
+    # ==========================================
+    # 3. СОХРАНЕНИЕ
+    # ==========================================
     with open("custom_sub.json", "w", encoding="utf-8") as f:
         json.dump(configs_array, f, indent=2, ensure_ascii=False)
         print(f"Готово! Создан custom_sub.json, внутри {len(configs_array)} серверов.")
