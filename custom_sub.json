@@ -10993,6 +10993,356 @@
         }
       },
       {
+        "tag": "proxy_363",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-oth-1.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-0190-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_364",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-oth-1.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-0190-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_365",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-oth-1.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-0190-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_366",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-oth-1.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-0190-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision-udp443"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_367",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "150.241.75.3",
+              "port": 443,
+              "users": [
+                {
+                  "id": "19ef3d02-1c55-4fec-9794-6def8cbac396",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "reality",
+          "realitySettings": {
+            "serverName": "eu-latdeliver.onnstreaming.ru",
+            "publicKey": "JgDfe0nB3kM-pi0YtkfSxx9MgWUwDv17qYkHisDul2M",
+            "shortId": "0c1de03e22ef2156",
+            "fingerprint": "random",
+            "show": false
+          }
+        }
+      },
+      {
+        "tag": "proxy_368",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "eu-latdeliver.onnstreaming.ru",
+              "port": 443,
+              "users": [
+                {
+                  "id": "19ef3d02-1c55-4fec-9794-6def8cbac396",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "reality",
+          "realitySettings": {
+            "serverName": "eu-latdeliver.onnstreaming.ru",
+            "publicKey": "JgDfe0nB3kM-pi0YtkfSxx9MgWUwDv17qYkHisDul2M",
+            "shortId": "0c1de03e22ef2156",
+            "fingerprint": "chrome",
+            "show": false
+          }
+        }
+      },
+      {
+        "tag": "proxy_369",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-de-1.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-2710-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_370",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-de-1.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-2710-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_371",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cluster-europe-1.firstvideocdn.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-1f40-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision-udp443"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_372",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cluster-europe-1.firstvideocdn.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-1f40-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_373",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "5.188.224.137",
+              "port": 2083,
+              "users": [
+                {
+                  "id": "74d3057f-5d2b-4d21-8819-3b387d47c0a4",
+                  "encryption": "none",
+                  "flow": ""
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "reality",
+          "realitySettings": {
+            "serverName": "ir.ozone.ru",
+            "publicKey": "J6NuOlIq3ypdTFc1TMhDDKmF8BWPnNWZq1EkxD7K-lQ",
+            "shortId": "6da16b1335651b38",
+            "fingerprint": "chrome",
+            "show": false
+          }
+        }
+      },
+      {
+        "tag": "proxy_374",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-ru-2.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-07d0-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_375",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "cl-ru-2.edgeflux.ru",
+              "port": 52006,
+              "users": [
+                {
+                  "id": "75807638-6f19-07d0-ae08-38492ee85c88",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls"
+        }
+      },
+      {
+        "tag": "proxy_376",
+        "protocol": "vless",
+        "settings": {
+          "vnext": [
+            {
+              "address": "144.31.130.40",
+              "port": 443,
+              "users": [
+                {
+                  "id": "08a20674-fe78-4eae-bcd8-6f44480a3392",
+                  "encryption": "none",
+                  "flow": "xtls-rprx-vision"
+                }
+              ]
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "reality",
+          "realitySettings": {
+            "serverName": "se.prowebcore.ru",
+            "publicKey": "91j4nGhBDQYcZP0AHXJgu1jnrFNRp27DIhN0Verhfhw",
+            "shortId": "5ac24c1ada080cc6",
+            "fingerprint": "random",
+            "show": false
+          }
+        }
+      },
+      {
         "tag": "direct",
         "protocol": "freedom"
       },
