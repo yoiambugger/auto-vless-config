@@ -12,7 +12,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt"
 ]
 
-CHUNK_SIZE = 50 # <--- ОПТИМИЗАЦИЯ ДЛЯ МОБИЛОК (по 50 штук на профиль)
+CHUNK_SIZE = 50 # Оптимизация для мобилок: по 50 штук на профиль
 
 # Список сайтов, которые будут работать НАПРЯМУЮ, минуя VPN
 DIRECT_DOMAINS = [
@@ -55,19 +55,6 @@ def parse_vless_link(link, index_tag):
         address, port = server_port.split(':', 1)
         params = dict(urllib.parse.parse_qsl(query_string))
 
-        network = params.get("type", "tcp")
-        security = params.get("security", "none")
-
-        # --- АНТИ-КРАШ ФИЛЬТР ---
-        if network not in ["tcp", "ws", "grpc", "kcp", "http", "httpupgrade", "xhttp"]:
-            return None
-
-        if security == "false":
-            security = "none"
-        elif security not in ["none", "tls", "reality"]:
-            return None
-        # ------------------------
-
         outbound = {
             "tag": index_tag, 
             "protocol": "vless",
@@ -83,12 +70,12 @@ def parse_vless_link(link, index_tag):
                 }]
             },
             "streamSettings": {
-                "network": network,
-                "security": security
+                "network": params.get("type", "tcp"),
+                "security": params.get("security", "none")
             }
         }
 
-        if security == "reality":
+        if params.get("security") == "reality":
             outbound["streamSettings"]["realitySettings"] = {
                 "serverName": params.get("sni", ""),
                 "publicKey": params.get("pbk", ""),
@@ -123,7 +110,6 @@ def main():
             core_link = link.split('#')[0]
             if core_link not in global_unique_cores:
                 global_unique_cores.add(core_link)
-                # Пока ставим пустой тег, перезапишем позже
                 parsed = parse_vless_link(link, "")
                 if parsed:
                     out_str = json.dumps(parsed).lower()
