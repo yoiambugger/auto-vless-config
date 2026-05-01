@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TgproxyVPN | Свободный интернет</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* --- ОБНОВЛЕННАЯ ГИПЕР-ЯРКАЯ ПАЛИТРА --- */
+            --bg-color: #030604; /* Ультра-черный для максимального контраста */
+            --texture-color: rgba(0, 255, 136, 0.03); 
+            --primary-green: #00e676; /* Более насыщенный зеленый */
+            --accent-green: #00ff88; /* Ослепительный зеленый */
+            --text-main: #ffffff; 
+            --text-dim: #b0b8c1; /* Осветленный серый для лучшей читаемости */
+            --card-bg: #090c0a; 
+            --neon-glow: 0 0 15px rgba(0, 255, 136, 0.5);
+            --neon-glow-intense: 0 0 25px rgba(0, 255, 136, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* --- ФОН: СДЕЛАН ЯРЧЕ --- */
+        .bg-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            background: radial-gradient(circle at center, #0a1f14 0%, var(--bg-color) 70%);
+        }
+
+        .bg-texture {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(var(--texture-color) 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            background-position: center;
+            z-index: -1;
+            opacity: 0.9; 
+        }
+
+        /* Фоновые свечения: ярче и больше */
+        .bg-glow {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            filter: blur(100px);
+            opacity: 0.6; /* Увеличена яркость */
+        }
+
+        .bg-glow::before {
+            content: '';
+            position: absolute;
+            width: 50vw; height: 50vw; /* Увеличен размер */
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.15) 0%, transparent 70%);
+            top: -15vh; right: -15vw;
+            animation: hover_glow 15s infinite alternate ease-in-out;
+        }
+
+        .bg-glow::after {
+            content: '';
+            position: absolute;
+            width: 60vw; height: 60vw; /* Увеличен размер */
+            background: radial-gradient(circle, rgba(0, 230, 118, 0.12) 0%, transparent 70%);
+            bottom: -20vh; left: -20vw;
+            animation: hover_glow 20s infinite alternate-reverse ease-in-out;
+        }
+
+        @keyframes hover_glow {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(8vw, 4vh) scale(1.15); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            text-align: center;
+            animation: fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 10;
+        }
+
+        header {
+            margin-bottom: 40px;
+        }
+
+        /* --- ЗАГОЛОВОК: СДЕЛАН ГИПЕР-ЗАМЕТНЫМ --- */
+        h1 {
+            font-size: 3rem; /* Чуть крупнее */
+            font-weight: 800;
+            margin-bottom: 5px;
+            /* Яркий, переливающийся градиент */
+            background: linear-gradient(90deg, #a7ffeb 0%, #00ff88 25%, #a7ffeb 50%, #00ff88 75%, #a7ffeb 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -2px;
+            /* Усиленное неоновое свечение */
+            text-shadow: var(--neon-glow);
+            animation: dotPulseTitle 3s infinite, shine 5s linear infinite;
+        }
+
+        /* Анимация перелива градиента */
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        /* Отдельная пульсация свечения для заголовка */
+        @keyframes dotPulseTitle {
+            0% { text-shadow: var(--neon-glow); }
+            50% { text-shadow: var(--neon-glow-intense); }
+            100% { text-shadow: var(--neon-glow); }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: rgba(0, 230, 118, 0.15); /* Ярче фон */
+            padding: 6px 14px;
+            border-radius: 100px;
+            color: var(--accent-green);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            box-shadow: var(--neon-glow); /* Добавлено свечение */
+        }
+
+        .dot {
+            width: 8px; height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: var(--neon-glow-intense);
+            animation: dotPulse 2s infinite; 
+        }
+
+        .description {
+            color: var(--text-dim);
+            max-width: 450px;
+            margin: 0 auto 30px auto;
+            font-size: 1.05rem; /* Чуть крупнее */
+            font-weight: 500;
+        }
+
+        .apps-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(0, 255, 136, 0.08); /* Граница заметнее */
+            border-radius: 20px;
+            padding: 24px;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        /* --- ЭФФЕКТ "ЗАЛИТИЯ СВЕТОМ" ПРИ НАВЕДЕНИИ --- */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(0, 255, 136, 0.08) 0%, transparent 80%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 255, 136, 0.6); /* Яркая граница */
+            transform: translateY(-8px) scale(1.01); /* Сильнее всплывает */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 255, 136, 0.15);
+        }
+
+        .card:hover::before {
+            opacity: 1; /* Включаем заливку светом */
+        }
+
+        .card h2 {
+            color: #fff;
+            font-size: 1.4rem; /* Крупнее */
+            margin-bottom: 6px;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .card:hover h2 {
+            color: var(--accent-green);
+            text-shadow: var(--neon-glow); /* Заголовок начинает светиться */
+        }
+
+        .card p {
+            color: var(--text-dim);
+            font-size: 0.95rem; /* Крупнее */
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        /* --- СЧЕТЧИК: СДЕЛАН ЯРЧЕ --- */
+        .counter-box {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7); /* Белее */
+            text-align: left;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .counter-num {
+            color: var(--accent-green); /* Ярче */
+            font-weight: 800;
+            font-size: 1rem; /* Крупнее */
+            letter-spacing: 0.5px;
+            display: inline-block;
+            text-shadow: var(--neon-glow); /* Легкое постоянное свечение */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn {
+            background-color: var(--primary-green);
+            color: #000;
+            padding: 14px 20px; /* Крупнее */
+            border: none;
+            border-radius: 12px;
+            font-weight: 700; /* Жирнее */
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem; /* Крупнее */
+            position: relative;
+            box-shadow: var(--neon-glow); /* Изначальное свечение */
+        }
+
+        /* --- УСИЛЕННАЯ ПУЛЬСАЦИЯ КНОПОК --- */
+        .btn:not(.outline) {
+            animation: btnPulseIntense 2s infinite;
+        }
+
+        .card:hover .btn:not(.outline) {
+            background-color: var(--accent-green);
+            transform: scale(1.04); 
+            animation: none; 
+            box-shadow: var(--neon-glow-intense); /* Мощное свечение */
+        }
+
+        .btn.outline {
+            background-color: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+            box-shadow: none;
+        }
+
+        .card:hover .btn.outline {
+            background-color: rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.4);
+            transform: scale(1.04);
+            color: var(--accent-green);
+            text-shadow: var(--neon-glow);
+            box-shadow: var(--neon-glow);
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+        }
+
+        .tg-link {
+            color: #00ff88;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-shadow: var(--neon-glow);
+        }
+
+        .tg-link:hover {
+            color: #fff;
+            text-shadow: var(--neon-glow-intense);
+        }
+
+        /* --- КЛЮЧЕВЫЕ КАДРЫ АНИМАЦИЙ --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes dotPulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
+        /* Усиленная пульсация кнопок */
+        @keyframes btnPulseIntense {
+            0% { box-shadow: 0 0 5px 0px rgba(0, 255, 136, 0.5); }
+            70% { box-shadow: 0 0 20px 15px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 5px 0px rgba(0, 255, 136, 0.5); }
+        }
+
+        /* Световой блик по карточке */
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover::after {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="bg-texture"></div>
+<div class="bg-glow"></div>
+
+<div class="container">
+    <header>
+        <h1>TgproxyVPN</h1>
+        <div class="status-badge">
+            <span class="dot"></span>
+            <span class="text">Сборщик онлайн</span>
+        </div>
+    </header>
+
+    <p class="description">
+        Бесплатный, безотказный VPN, который работает в любых условиях. Собрали лучшие vless-конфиги в умные сервера. Просто выбери приложение ниже.
+    </p>
+
+    <main class="apps-grid">
+        <a href="https://r.stun.su/?to=happ://add/https://raw.githubusercontent.com/yoiambugger/auto-vless-config/refs/heads/main/custom_sub.json%23TgproxyVPN" class="card" id="card-happ">
+            <h2>Happ</h2>
+            <p>Идеально для iPhone и Android. Нажми, чтобы автоматически импортировать все сервера.</p>
+            <div class="counter-box">Подписку подключили: <span id="count-happ" class="counter-num">0</span></div>
+            <button class="btn">Добавить в Happ</button>
+        </a>
+
+        <a href="v2raytun://import/https://raw.githubusercontent.com/yoiambugger/auto-vless-config/refs/heads/main/custom_sub.json%23TgproxyVPN" class="card" id="card-v2raytun">
+            <h2>v2raytun</h2>
+            <p>Мощный клиент с детальной настройкой. Добавление подписки в один клик.</p>
+            <div class="counter-box">Подписку подключили: <span id="count-v2raytun" class="counter-num">0</span></div>
+            <button class="btn">Импортировать в v2raytun</button>
+        </a>
+
+        <a href="https://raw.githubusercontent.com/yoiambugger/auto-vless-config/refs/heads/main/custom_sub.json" class="card" target="_blank" id="card-json">
+            <h2>Прямая ссылка</h2>
+            <p>Для v2rayNG, NekoBox и других приложений. Скопируй адрес и вставь в настройки.</p>
+            <div class="counter-box">Подписку подключили: <span id="count-json" class="counter-num">0</span></div>
+            <button class="btn outline">Открыть JSON</button>
+        </a>
+    </main>
+
+    <footer>
+        <p>© 2026 TgproxyVPN.</p>
+        <p>Следите за обновлениями в <a href="https://t.me/telegaproxys" class="tg-link">@telegaproxys</a></p>
+    </footer>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const baseCounts = {
+            'happ': 0,
+            'v2raytun': 0,
+            'json': 0
+        };
+
+        ['happ', 'v2raytun', 'json'].forEach(id => {
+            const card = document.getElementById(`card-${id}`);
+            const countSpan = document.getElementById(`count-${id}`);
+
+            const hasClicked = localStorage.getItem(`clicked_tgproxy_${id}`);
+            let currentCount = baseCounts[id];
+
+            if (hasClicked) {
+                currentCount++;
+            }
+
+            countSpan.innerText = currentCount;
+
+            card.addEventListener('click', () => {
+                if (!localStorage.getItem(`clicked_tgproxy_${id}`)) {
+                    localStorage.setItem(`clicked_tgproxy_${id}`, 'true');
+                    
+                    currentCount++;
+                    countSpan.innerText = currentCount;
+                    
+                    // Усиленная анимация клика
+                    countSpan.style.transform = 'scale(1.5)';
+                    countSpan.style.color = '#fff';
+                    countSpan.style.textShadow = '0 0 20px rgba(0,255,136,1)';
+                    
+                    setTimeout(() => {
+                        countSpan.style.transform = 'scale(1)';
+                        countSpan.style.color = 'var(--accent-green)';
+                        countSpan.style.textShadow = '0 0 10px rgba(0,255,136,0.5)';
+                    }, 400);
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
