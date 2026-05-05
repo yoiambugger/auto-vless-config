@@ -3,10 +3,10 @@ import urllib.parse
 import json
 import re
 
-# Тот самый источник для Резерва (Топ-50 нерусских, приоритет Германия)
+# Тот самый источник для Резерва (Топ-70 нерусских, приоритет Германия)
 RESERVE_SOURCE = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt"
 
-# Список источников (добавил твой основной в начало списка)
+# Список источников
 SOURCES = [
     "https://raw.githubusercontent.com/VAL41K/bypass-rkn-blocks/refs/heads/main/configs/obhod_WL",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt",
@@ -14,7 +14,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt"
 ]
 
-CHUNK_SIZE = 50 
+CHUNK_SIZE = 70 # Оптимизация для мобилок: теперь по 70 штук на профиль
 
 # Список сайтов для прямого подключения (мимо VPN)
 DIRECT_DOMAINS = [
@@ -126,8 +126,8 @@ def main():
         return 0
 
     reserve_parsed.sort(key=is_germany, reverse=True)
-    top_reserve = reserve_parsed[:50]
-    main_parsed.extend(reserve_parsed[50:])
+    top_reserve = reserve_parsed[:70] # Берем 70 для резерва
+    main_parsed.extend(reserve_parsed[70:]) # Остальное закидываем в общую кучу
 
     for i, out in enumerate(top_reserve):
         out["tag"] = f"proxy_res_{i}"
@@ -157,7 +157,7 @@ def main():
         }
         configs_array.append(reserve_profile)
 
-    # 2. ОБРАБОТКА ВСЕХ ОСТАЛЬНЫХ (ВКЛЮЧАЯ ТВОЙ НОВЫЙ ИСТОЧНИК)
+    # 2. ОБРАБОТКА ВСЕХ ОСТАЛЬНЫХ
     raw_links = []
     for url in SOURCES:
         try:
