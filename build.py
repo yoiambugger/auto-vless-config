@@ -233,7 +233,7 @@ def main():
         server_number = chunk_idx + 1
         
         config_profile = {
-            "remarks": f"🇲🇦 🗽 LTE {server_number} | @telegaproxys",
+            "remarks": f"🇲🇦 🗽 LTE {server_number} | t.me/telegaproxys",
             "observatory": {
                 "subjectSelector": ["proxy_"], 
                 "probeUrl": "https://www.google.com/generate_204",
