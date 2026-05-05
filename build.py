@@ -1,20 +1,22 @@
 import requests
 import urllib.parse
 import json
+import re
 
 # Тот самый источник для Резерва (Топ-50 нерусских, приоритет Германия)
 RESERVE_SOURCE = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt"
 
-# Остальные актуальные источники
+# Список источников (добавил твой основной в начало списка)
 SOURCES = [
+    "https://raw.githubusercontent.com/VAL41K/bypass-rkn-blocks/refs/heads/main/configs/obhod_WL",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-SNI-RU-all.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt"
 ]
 
-CHUNK_SIZE = 50 # Оптимизация для мобилок: по 50 штук на профиль
+CHUNK_SIZE = 50 
 
-# Список сайтов, которые будут работать НАПРЯМУЮ, минуя VPN
+# Список сайтов для прямого подключения (мимо VPN)
 DIRECT_DOMAINS = [
     "max.ru", "domain:2gis.ru", "domain:ads.x5.ru", "domain:2gis.com", 
     "domain:aif.ru", "domain:aeroflot.ru", "domain:alfabank.ru", "domain:avito.ru", 
@@ -91,18 +93,16 @@ def parse_vless_link(link, index_tag):
 def main():
     global_unique_cores = set()
     configs_array = []
-    main_parsed = [] # Сюда будем складывать всё, что не вошло в Резерв
+    main_parsed = [] 
 
-    # ==========================================
-    # 1. ОБРАБОТКА РЕЗЕРВНОГО ИСТОЧНИКА
-    # ==========================================
+    # 1. ОБРАБОТКА РЕЗЕРВА
     reserve_raw = []
     try:
         resp = requests.get(RESERVE_SOURCE)
         if resp.status_code == 200:
             reserve_raw = resp.text.splitlines()
     except Exception as e:
-        print(f"Ошибка загрузки резервного источника: {e}")
+        print(f"Ошибка резерва: {e}")
 
     reserve_parsed = []
     for link in reserve_raw:
@@ -114,13 +114,11 @@ def main():
                 parsed = parse_vless_link(link, "")
                 if parsed:
                     out_str = json.dumps(parsed).lower()
-                    # Если нерусский — в резерв. Если русский — спасаем в общую кучу!
                     if ".ru" not in out_str and ".su" not in out_str and ".рф" not in out_str:
                         reserve_parsed.append(parsed)
                     else:
                         main_parsed.append(parsed)
 
-    # Сортируем: Германия в приоритете
     def is_germany(out):
         out_str = json.dumps(out).lower()
         if ".de" in out_str or "-de" in out_str or "germany" in out_str or "fra" in out_str or "frankfurt" in out_str:
@@ -128,14 +126,9 @@ def main():
         return 0
 
     reserve_parsed.sort(key=is_germany, reverse=True)
-
-    # Забираем ровно 50
     top_reserve = reserve_parsed[:50]
-    # Все остальные нерусские, которые не влезли в 50, тоже спасаем в общую кучу
-    leftover_reserve = reserve_parsed[50:]
-    main_parsed.extend(leftover_reserve)
+    main_parsed.extend(reserve_parsed[50:])
 
-    # Переписываем теги для Резерва
     for i, out in enumerate(top_reserve):
         out["tag"] = f"proxy_res_{i}"
 
@@ -149,57 +142,22 @@ def main():
             },
             "routing": {
                 "domainStrategy": "IPIfNonMatch",
-                "balancers": [
-                    {
-                        "tag": "best_ping_balancer",
-                        "selector": ["proxy_res_"],
-                        "strategy": {"type": "leastPing"} 
-                    }
-                ],
+                "balancers": [{"tag": "best_ping_balancer", "selector": ["proxy_res_"], "strategy": {"type": "leastPing"}}],
                 "rules": [
-                    {
-                        "type": "field",
-                        "protocol": ["bittorrent"],
-                        "outboundTag": "direct"
-                    },
-                    {
-                        "type": "field",
-                        "domain": DIRECT_DOMAINS,
-                        "outboundTag": "direct"
-                    },
-                    {
-                        "type": "field",
-                        "network": "tcp,udp",
-                        "balancerTag": "best_ping_balancer" 
-                    }
+                    {"type": "field", "protocol": ["bittorrent"], "outboundTag": "direct"},
+                    {"type": "field", "domain": DIRECT_DOMAINS, "outboundTag": "direct"},
+                    {"type": "field", "domain": ["geosite:telegram", "domain:telegram.org", "domain:t.me"], "balancerTag": "best_ping_balancer"},
+                    {"type": "field", "ip": ["geoip:telegram", "91.108.4.0/22", "91.108.8.0/22", "91.108.12.0/22", "91.108.16.0/22", "91.108.56.0/22", "149.154.160.0/20", "185.76.151.0/24"], "balancerTag": "best_ping_balancer"},
+                    {"type": "field", "network": "tcp,udp", "balancerTag": "best_ping_balancer"}
                 ]
             },
-            "outbounds": top_reserve + [
-                {"tag": "direct", "protocol": "freedom"},
-                {"tag": "block", "protocol": "blackhole"}
-            ],
-            "inbounds": [
-                {
-                    "tag": "socks", "port": 10808, "protocol": "socks",
-                    "settings": {"udp": True, "auth": "noauth"},
-                    "sniffing": {"enabled": True, "destOverride": ["http", "tls"]}
-                },
-                {
-                    "tag": "http", "port": 10809, "protocol": "http",
-                    "settings": {"allowTransparent": False}
-                }
-            ],
-            "dns": {
-                "servers": ["1.1.1.1", "1.0.0.1"],
-                "queryStrategy": "IPIfNonMatch"
-            }
+            "outbounds": top_reserve + [{"tag": "direct", "protocol": "freedom"}, {"tag": "block", "protocol": "blackhole"}],
+            "inbounds": [{"tag": "socks", "port": 10808, "protocol": "socks", "settings": {"udp": True, "auth": "noauth"}, "sniffing": {"enabled": True, "destOverride": ["http", "tls"]}}, {"tag": "http", "port": 10809, "protocol": "http", "settings": {"allowTransparent": False}}],
+            "dns": {"servers": ["1.1.1.1", "1.0.0.1"], "queryStrategy": "IPIfNonMatch"}
         }
         configs_array.append(reserve_profile)
 
-
-    # ==========================================
-    # 2. ОБРАБОТКА ОСТАЛЬНЫХ СЕРВЕРОВ
-    # ==========================================
+    # 2. ОБРАБОТКА ВСЕХ ОСТАЛЬНЫХ (ВКЛЮЧАЯ ТВОЙ НОВЫЙ ИСТОЧНИК)
     raw_links = []
     for url in SOURCES:
         try:
@@ -219,82 +177,39 @@ def main():
                 if parsed:
                     main_parsed.append(parsed)
 
-    # Переписываем теги для общей массы
     for i, out in enumerate(main_parsed):
         out["tag"] = f"proxy_{i}"
 
     total_chunks = (len(main_parsed) + CHUNK_SIZE - 1) // CHUNK_SIZE 
-
     for chunk_idx in range(total_chunks):
         start_idx = chunk_idx * CHUNK_SIZE
         end_idx = start_idx + CHUNK_SIZE
         chunk_outbounds = main_parsed[start_idx:end_idx]
-        
         server_number = chunk_idx + 1
         
         config_profile = {
             "remarks": f"🇲🇦 🗽 LTE {server_number} | t.me/telegaproxys",
-            "observatory": {
-                "subjectSelector": ["proxy_"], 
-                "probeUrl": "https://www.google.com/generate_204",
-                "probeInterval": "10s"
-            },
+            "observatory": {"subjectSelector": ["proxy_"], "probeUrl": "https://www.google.com/generate_204", "probeInterval": "10s"},
             "routing": {
                 "domainStrategy": "IPIfNonMatch",
-                "balancers": [
-                    {
-                        "tag": "best_ping_balancer",
-                        "selector": ["proxy_"],
-                        "strategy": {"type": "leastPing"} 
-                    }
-                ],
+                "balancers": [{"tag": "best_ping_balancer", "selector": ["proxy_"], "strategy": {"type": "leastPing"}}],
                 "rules": [
-                    {
-                        "type": "field",
-                        "protocol": ["bittorrent"],
-                        "outboundTag": "direct"
-                    },
-                    {
-                        "type": "field",
-                        "domain": DIRECT_DOMAINS,
-                        "outboundTag": "direct"
-                    },
-                    {
-                        "type": "field",
-                        "network": "tcp,udp",
-                        "balancerTag": "best_ping_balancer" 
-                    }
+                    {"type": "field", "protocol": ["bittorrent"], "outboundTag": "direct"},
+                    {"type": "field", "domain": DIRECT_DOMAINS, "outboundTag": "direct"},
+                    {"type": "field", "domain": ["geosite:telegram", "domain:telegram.org", "domain:t.me"], "balancerTag": "best_ping_balancer"},
+                    {"type": "field", "ip": ["geoip:telegram", "91.108.4.0/22", "91.108.8.0/22", "91.108.12.0/22", "91.108.16.0/22", "91.108.56.0/22", "149.154.160.0/20", "185.76.151.0/24"], "balancerTag": "best_ping_balancer"},
+                    {"type": "field", "network": "tcp,udp", "balancerTag": "best_ping_balancer"}
                 ]
             },
-            "outbounds": chunk_outbounds + [
-                {"tag": "direct", "protocol": "freedom"},
-                {"tag": "block", "protocol": "blackhole"}
-            ],
-            "inbounds": [
-                {
-                    "tag": "socks", "port": 10808, "protocol": "socks",
-                    "settings": {"udp": True, "auth": "noauth"},
-                    "sniffing": {"enabled": True, "destOverride": ["http", "tls"]}
-                },
-                {
-                    "tag": "http", "port": 10809, "protocol": "http",
-                    "settings": {"allowTransparent": False}
-                }
-            ],
-            "dns": {
-                "servers": ["1.1.1.1", "1.0.0.1"],
-                "queryStrategy": "IPIfNonMatch"
-            }
+            "outbounds": chunk_outbounds + [{"tag": "direct", "protocol": "freedom"}, {"tag": "block", "protocol": "blackhole"}],
+            "inbounds": [{"tag": "socks", "port": 10808, "protocol": "socks", "settings": {"udp": True, "auth": "noauth"}, "sniffing": {"enabled": True, "destOverride": ["http", "tls"]}}, {"tag": "http", "port": 10809, "protocol": "http", "settings": {"allowTransparent": False}}],
+            "dns": {"servers": ["1.1.1.1", "1.0.0.1"], "queryStrategy": "IPIfNonMatch"}
         }
-        
         configs_array.append(config_profile)
 
-    # ==========================================
-    # 3. СОХРАНЕНИЕ
-    # ==========================================
     with open("custom_sub.json", "w", encoding="utf-8") as f:
         json.dump(configs_array, f, indent=2, ensure_ascii=False)
-        print(f"Готово! Создан custom_sub.json, внутри {len(configs_array)} серверов.")
+        print(f"Готово! custom_sub.json обновлен. Найдено нод: {len(main_parsed) + len(top_reserve)}")
 
 if __name__ == "__main__":
     main()
