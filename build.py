@@ -1,10 +1,9 @@
 import requests
 import urllib.parse
 import json
-import ipaddress
-import socket
+import re
 
-# Тот самый источник для Резерва
+# Тот самый источник для Резерва (Топ-70 нерусских, приоритет Германия)
 RESERVE_SOURCE = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt"
 
 # Список источников
@@ -15,10 +14,7 @@ SOURCES = [
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt"
 ]
 
-CHUNK_SIZE = 50 # Вернули 50 штук на профиль
-
-# Ссылка на актуальный список всех российских IP-подсетей
-RU_CIDR_URL = "https://raw.githubusercontent.com/herrbischoff/country-ip-blocks/master/ipv4/ru.cidr"
+CHUNK_SIZE = 70 # Оптимизация для мобилок: теперь по 70 штук на профиль
 
 # Список сайтов для прямого подключения (мимо VPN)
 DIRECT_DOMAINS = [
@@ -44,59 +40,6 @@ DIRECT_DOMAINS = [
     "domain:fd.oneme.ru", "domain:i.oneme.ru", "domain:miniapps.max.ru", 
     "domain:sdk-api.apptracer.ru", "domain:st.max.ru", "domain:tracker-api.vk-analytics.ru"
 ]
-
-def get_ru_networks():
-    """Скачивает и парсит базу всех российских IP-адресов"""
-    networks = []
-    try:
-        print("Скачиваем базу RU IP подсетей...")
-        resp = requests.get(RU_CIDR_URL, timeout=15)
-        if resp.status_code == 200:
-            for line in resp.text.splitlines():
-                if line.strip() and not line.startswith('#'):
-                    networks.append(ipaddress.ip_network(line.strip()))
-        print(f"Успешно загружено {len(networks)} российских подсетей.")
-    except Exception as e:
-        print(f"Ошибка загрузки базы IP: {e}")
-    return networks
-
-def is_masquerading(parsed, ru_networks):
-    """Проверяет: SNI должен быть русским, а IP сервера - заграничным"""
-    try:
-        address = parsed["settings"]["vnext"][0]["address"]
-        sni = parsed.get("streamSettings", {}).get("realitySettings", {}).get("serverName", "").lower()
-        
-        # 1. Проверяем, маскируется ли он под РФ (SNI)
-        is_ru_sni = sni.endswith(".ru") or sni.endswith(".su") or sni.endswith(".рф") or "yandex" in sni or "vk.com" in sni or "mail.ru" in sni
-        if not is_ru_sni:
-            return False # Не маскируется под РФ - отбрасываем
-            
-        # 2. Проверяем, находится ли IP-адрес за границей
-        try:
-            ip_obj = ipaddress.ip_address(address)
-        except ValueError:
-            # Если вместо IP указан домен, пробуем узнать его IP
-            try:
-                resolved_ip = socket.gethostbyname(address)
-                ip_obj = ipaddress.ip_address(resolved_ip)
-            except Exception:
-                return True # Если не удалось пробить, на всякий случай оставляем
-                
-        # Ищем IP в списке российских
-        for net in ru_networks:
-            if ip_obj in net:
-                return False # Сервер физически в РФ! Отбрасываем.
-                
-        return True # Маскируется под РФ, а IP заграничный. Идеально!
-    except Exception:
-        return False
-
-def is_germany(link_str):
-    """Ищет упоминания Германии в сырой ссылке для резерва"""
-    s = link_str.lower()
-    if "-de" in s or "germany" in s or "fra" in s or "frankfurt" in s or "🇩🇪" in s:
-        return 1
-    return 0
 
 def parse_vless_link(link, index_tag):
     try:
@@ -151,22 +94,17 @@ def main():
     global_unique_cores = set()
     configs_array = []
     main_parsed = [] 
-    
-    # Загружаем базу РФ-айпишников для фильтра
-    ru_networks = get_ru_networks()
 
-    # ==========================================
     # 1. ОБРАБОТКА РЕЗЕРВА
-    # ==========================================
     reserve_raw = []
     try:
         resp = requests.get(RESERVE_SOURCE)
         if resp.status_code == 200:
             reserve_raw = resp.text.splitlines()
     except Exception as e:
-        print(f"Ошибка загрузки резерва: {e}")
+        print(f"Ошибка резерва: {e}")
 
-    reserve_valid = []
+    reserve_parsed = []
     for link in reserve_raw:
         link = link.strip()
         if link.startswith("vless://"):
@@ -174,17 +112,22 @@ def main():
             if core_link not in global_unique_cores:
                 global_unique_cores.add(core_link)
                 parsed = parse_vless_link(link, "")
-                # Применяем наш мощный фильтр!
-                if parsed and is_masquerading(parsed, ru_networks):
-                    reserve_valid.append((parsed, link))
+                if parsed:
+                    out_str = json.dumps(parsed).lower()
+                    if ".ru" not in out_str and ".su" not in out_str and ".рф" not in out_str:
+                        reserve_parsed.append(parsed)
+                    else:
+                        main_parsed.append(parsed)
 
-    # Сортируем: Германия в приоритете
-    reserve_valid.sort(key=lambda x: is_germany(x[1]), reverse=True)
-    reserve_parsed = [x[0] for x in reserve_valid]
+    def is_germany(out):
+        out_str = json.dumps(out).lower()
+        if ".de" in out_str or "-de" in out_str or "germany" in out_str or "fra" in out_str or "frankfurt" in out_str:
+            return 1
+        return 0
 
-    # Забираем ровно 50
-    top_reserve = reserve_parsed[:CHUNK_SIZE]
-    main_parsed.extend(reserve_parsed[CHUNK_SIZE:]) # Остальное спасаем в общую кучу
+    reserve_parsed.sort(key=is_germany, reverse=True)
+    top_reserve = reserve_parsed[:70] # Берем 70 для резерва
+    main_parsed.extend(reserve_parsed[70:]) # Остальное закидываем в общую кучу
 
     for i, out in enumerate(top_reserve):
         out["tag"] = f"proxy_res_{i}"
@@ -214,9 +157,7 @@ def main():
         }
         configs_array.append(reserve_profile)
 
-    # ==========================================
-    # 2. ОБРАБОТКА ОСТАЛЬНЫХ СЕРВЕРОВ
-    # ==========================================
+    # 2. ОБРАБОТКА ВСЕХ ОСТАЛЬНЫХ
     raw_links = []
     for url in SOURCES:
         try:
@@ -233,8 +174,7 @@ def main():
             if core_link not in global_unique_cores:
                 global_unique_cores.add(core_link)
                 parsed = parse_vless_link(link, "")
-                # Тот же фильтр для общей кучи
-                if parsed and is_masquerading(parsed, ru_networks):
+                if parsed:
                     main_parsed.append(parsed)
 
     for i, out in enumerate(main_parsed):
@@ -267,12 +207,9 @@ def main():
         }
         configs_array.append(config_profile)
 
-    # ==========================================
-    # 3. СОХРАНЕНИЕ
-    # ==========================================
     with open("custom_sub.json", "w", encoding="utf-8") as f:
         json.dump(configs_array, f, indent=2, ensure_ascii=False)
-        print(f"Готово! custom_sub.json обновлен. Идеальных маскировочных нод: {len(main_parsed) + len(top_reserve)}")
+        print(f"Готово! custom_sub.json обновлен. Найдено нод: {len(main_parsed) + len(top_reserve)}")
 
 if __name__ == "__main__":
     main()
