@@ -8,7 +8,15 @@
       "probeUrl": "https://www.google.com/generate_204",
       "probeInterval": "10s"
     },
+    "dns": {
+      "servers": [
+        "https://8.8.8.8/dns-query",
+        "https://8.8.8.8/dns-query"
+      ],
+      "queryStrategy": "UseIP"
+    },
     "routing": {
+      "domainMatcher": "hybrid",
       "domainStrategy": "IPIfNonMatch",
       "balancers": [
         {
@@ -26,6 +34,93 @@
           "type": "field",
           "protocol": [
             "bittorrent"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "max.ru",
+            "domain:2gis.ru",
+            "domain:ads.x5.ru",
+            "domain:2gis.com",
+            "domain:aif.ru",
+            "domain:aeroflot.ru",
+            "domain:alfabank.ru",
+            "domain:avito.ru",
+            "domain:beeline.ru",
+            "domain:burgerkingrus.ru",
+            "domain:dellin.ru",
+            "domain:drive2.ru",
+            "domain:dzen.ru",
+            "domain:flypobeda.ru",
+            "domain:forbes.ru",
+            "domain:gazeta.ru",
+            "domain:gazprombank.ru",
+            "domain:gismeteo.ru",
+            "domain:gosuslugi.ru",
+            "domain:hh.ru",
+            "domain:kontur.ru",
+            "domain:kontur.host",
+            "domain:kp.ru",
+            "domain:kuper.ru",
+            "domain:lenta.ru",
+            "domain:mail.ru",
+            "domain:max.ru",
+            "domain:megamarket.ru",
+            "domain:megamarket.tech",
+            "domain:megafon.ru",
+            "domain:moex.com",
+            "domain:motivtelecom.ru",
+            "domain:ozon.ru",
+            "domain:pervye.ru",
+            "domain:psbank.ru",
+            "domain:rambler.ru",
+            "domain:rambler-co.ru",
+            "domain:rbc.ru",
+            "domain:reg.ru",
+            "domain:reviews.2gis.com",
+            "domain:rg.ru",
+            "domain:ria.ru",
+            "domain:ruwiki.ru",
+            "domain:rustore.ru",
+            "domain:rutube.ru",
+            "domain:rzd.ru",
+            "domain:sirena-travel.ru",
+            "domain:sravni.ru",
+            "domain:t-j.ru",
+            "domain:t2.ru",
+            "domain:tank-online.com",
+            "domain:taximaxim.ru",
+            "domain:tbank-online.com",
+            "domain:tildaapi.com",
+            "domain:tns-counter.ru",
+            "domain:trvl.yandex.net",
+            "domain:tutu.ru",
+            "domain:vk.com",
+            "domain:vk.ru",
+            "domain:vkvideo.ru",
+            "domain:vtb.ru",
+            "domain:x5.ru",
+            "domain:ya.ru",
+            "domain:yandex.ru",
+            "domain:yandex.net",
+            "domain:yandex.com",
+            "domain:yastatic.net",
+            "domain:yandexcloud.net",
+            "full:go.yandex",
+            "full:ru.ruwiki.ru",
+            "domain:xn--90acagbhgpca7c8c7f.xn--p1ai",
+            "domain:xn--80ajghhoc2aj1c8b.xn--p1ai",
+            "domain:xn--90aivcdt6dxbc.xn--p1ai",
+            "domain:xn--b1aew.xn--p1ai",
+            "domain:api.oneme.ru",
+            "domain:fd.oneme.ru",
+            "domain:i.oneme.ru",
+            "domain:miniapps.max.ru",
+            "domain:sdk-api.apptracer.ru",
+            "domain:st.max.ru",
+            "domain:tracker-api.vk-analytics.ru"
           ],
           "outboundTag": "direct"
         },
@@ -72,7 +167,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -102,7 +198,8 @@
             "shortId": "8f2342038a173437",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -132,7 +229,8 @@
             "shortId": "",
             "fingerprint": "qq",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -162,7 +260,8 @@
             "shortId": "",
             "fingerprint": "qq",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -192,7 +291,8 @@
             "shortId": "",
             "fingerprint": "qq",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -222,7 +322,8 @@
             "shortId": "",
             "fingerprint": "qq",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -252,7 +353,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -282,7 +384,8 @@
             "shortId": "6a2b5c9d",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -312,7 +415,8 @@
             "shortId": "34256b39b4ebb864",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -342,7 +446,8 @@
             "shortId": "e8d2a1b4c39f8877",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -358,18 +463,38 @@
       {
         "tag": "socks",
         "port": 10808,
+        "listen": "127.0.0.1",
         "protocol": "socks",
         "settings": {
           "udp": true,
           "auth": "noauth"
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       },
       {
         "tag": "http",
         "port": 10809,
+        "listen": "127.0.0.1",
         "protocol": "http",
         "settings": {
           "allowTransparent": false
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       }
     ]
@@ -383,7 +508,15 @@
       "probeUrl": "https://www.google.com/generate_204",
       "probeInterval": "10s"
     },
+    "dns": {
+      "servers": [
+        "https://8.8.8.8/dns-query",
+        "https://8.8.8.8/dns-query"
+      ],
+      "queryStrategy": "UseIP"
+    },
     "routing": {
+      "domainMatcher": "hybrid",
       "domainStrategy": "IPIfNonMatch",
       "balancers": [
         {
@@ -401,6 +534,93 @@
           "type": "field",
           "protocol": [
             "bittorrent"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "max.ru",
+            "domain:2gis.ru",
+            "domain:ads.x5.ru",
+            "domain:2gis.com",
+            "domain:aif.ru",
+            "domain:aeroflot.ru",
+            "domain:alfabank.ru",
+            "domain:avito.ru",
+            "domain:beeline.ru",
+            "domain:burgerkingrus.ru",
+            "domain:dellin.ru",
+            "domain:drive2.ru",
+            "domain:dzen.ru",
+            "domain:flypobeda.ru",
+            "domain:forbes.ru",
+            "domain:gazeta.ru",
+            "domain:gazprombank.ru",
+            "domain:gismeteo.ru",
+            "domain:gosuslugi.ru",
+            "domain:hh.ru",
+            "domain:kontur.ru",
+            "domain:kontur.host",
+            "domain:kp.ru",
+            "domain:kuper.ru",
+            "domain:lenta.ru",
+            "domain:mail.ru",
+            "domain:max.ru",
+            "domain:megamarket.ru",
+            "domain:megamarket.tech",
+            "domain:megafon.ru",
+            "domain:moex.com",
+            "domain:motivtelecom.ru",
+            "domain:ozon.ru",
+            "domain:pervye.ru",
+            "domain:psbank.ru",
+            "domain:rambler.ru",
+            "domain:rambler-co.ru",
+            "domain:rbc.ru",
+            "domain:reg.ru",
+            "domain:reviews.2gis.com",
+            "domain:rg.ru",
+            "domain:ria.ru",
+            "domain:ruwiki.ru",
+            "domain:rustore.ru",
+            "domain:rutube.ru",
+            "domain:rzd.ru",
+            "domain:sirena-travel.ru",
+            "domain:sravni.ru",
+            "domain:t-j.ru",
+            "domain:t2.ru",
+            "domain:tank-online.com",
+            "domain:taximaxim.ru",
+            "domain:tbank-online.com",
+            "domain:tildaapi.com",
+            "domain:tns-counter.ru",
+            "domain:trvl.yandex.net",
+            "domain:tutu.ru",
+            "domain:vk.com",
+            "domain:vk.ru",
+            "domain:vkvideo.ru",
+            "domain:vtb.ru",
+            "domain:x5.ru",
+            "domain:ya.ru",
+            "domain:yandex.ru",
+            "domain:yandex.net",
+            "domain:yandex.com",
+            "domain:yastatic.net",
+            "domain:yandexcloud.net",
+            "full:go.yandex",
+            "full:ru.ruwiki.ru",
+            "domain:xn--90acagbhgpca7c8c7f.xn--p1ai",
+            "domain:xn--80ajghhoc2aj1c8b.xn--p1ai",
+            "domain:xn--90aivcdt6dxbc.xn--p1ai",
+            "domain:xn--b1aew.xn--p1ai",
+            "domain:api.oneme.ru",
+            "domain:fd.oneme.ru",
+            "domain:i.oneme.ru",
+            "domain:miniapps.max.ru",
+            "domain:sdk-api.apptracer.ru",
+            "domain:st.max.ru",
+            "domain:tracker-api.vk-analytics.ru"
           ],
           "outboundTag": "direct"
         },
@@ -447,7 +667,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -477,7 +698,8 @@
             "shortId": "c64556c616970b14",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -507,7 +729,8 @@
             "shortId": "dd",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -537,7 +760,8 @@
             "shortId": "ea10cd5686751ec5",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -567,7 +791,8 @@
             "shortId": "399a4569c48e12e6",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -597,7 +822,8 @@
             "shortId": "e069bfaf9ba2069c",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -627,7 +853,8 @@
             "shortId": "5e3ab3ab228625",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -657,7 +884,8 @@
             "shortId": "57e7bb88",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -687,7 +915,8 @@
             "shortId": "b28896ec1669a951",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -717,7 +946,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -747,7 +977,8 @@
             "shortId": "fe12",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -777,7 +1008,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -807,7 +1039,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -837,7 +1070,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -867,7 +1101,8 @@
             "shortId": "e069bfaf9ba2069c",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -897,7 +1132,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -927,7 +1163,8 @@
             "shortId": "b28896ec1669a951",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -957,7 +1194,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -987,7 +1225,8 @@
             "shortId": "a7ec6c3316eddb11",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1017,7 +1256,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1047,7 +1287,8 @@
             "shortId": "e80a3158be637ee1",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1077,7 +1318,8 @@
             "shortId": "ea10cd5686751ec5",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1107,7 +1349,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1137,7 +1380,8 @@
             "shortId": "399a4569c48e12e6",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1167,7 +1411,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1197,7 +1442,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1227,7 +1473,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1257,7 +1504,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1287,7 +1535,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1317,7 +1566,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1333,18 +1583,38 @@
       {
         "tag": "socks",
         "port": 10808,
+        "listen": "127.0.0.1",
         "protocol": "socks",
         "settings": {
           "udp": true,
           "auth": "noauth"
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       },
       {
         "tag": "http",
         "port": 10809,
+        "listen": "127.0.0.1",
         "protocol": "http",
         "settings": {
           "allowTransparent": false
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       }
     ]
@@ -1358,7 +1628,15 @@
       "probeUrl": "https://www.google.com/generate_204",
       "probeInterval": "10s"
     },
+    "dns": {
+      "servers": [
+        "https://8.8.8.8/dns-query",
+        "https://8.8.8.8/dns-query"
+      ],
+      "queryStrategy": "UseIP"
+    },
     "routing": {
+      "domainMatcher": "hybrid",
       "domainStrategy": "IPIfNonMatch",
       "balancers": [
         {
@@ -1376,6 +1654,93 @@
           "type": "field",
           "protocol": [
             "bittorrent"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "max.ru",
+            "domain:2gis.ru",
+            "domain:ads.x5.ru",
+            "domain:2gis.com",
+            "domain:aif.ru",
+            "domain:aeroflot.ru",
+            "domain:alfabank.ru",
+            "domain:avito.ru",
+            "domain:beeline.ru",
+            "domain:burgerkingrus.ru",
+            "domain:dellin.ru",
+            "domain:drive2.ru",
+            "domain:dzen.ru",
+            "domain:flypobeda.ru",
+            "domain:forbes.ru",
+            "domain:gazeta.ru",
+            "domain:gazprombank.ru",
+            "domain:gismeteo.ru",
+            "domain:gosuslugi.ru",
+            "domain:hh.ru",
+            "domain:kontur.ru",
+            "domain:kontur.host",
+            "domain:kp.ru",
+            "domain:kuper.ru",
+            "domain:lenta.ru",
+            "domain:mail.ru",
+            "domain:max.ru",
+            "domain:megamarket.ru",
+            "domain:megamarket.tech",
+            "domain:megafon.ru",
+            "domain:moex.com",
+            "domain:motivtelecom.ru",
+            "domain:ozon.ru",
+            "domain:pervye.ru",
+            "domain:psbank.ru",
+            "domain:rambler.ru",
+            "domain:rambler-co.ru",
+            "domain:rbc.ru",
+            "domain:reg.ru",
+            "domain:reviews.2gis.com",
+            "domain:rg.ru",
+            "domain:ria.ru",
+            "domain:ruwiki.ru",
+            "domain:rustore.ru",
+            "domain:rutube.ru",
+            "domain:rzd.ru",
+            "domain:sirena-travel.ru",
+            "domain:sravni.ru",
+            "domain:t-j.ru",
+            "domain:t2.ru",
+            "domain:tank-online.com",
+            "domain:taximaxim.ru",
+            "domain:tbank-online.com",
+            "domain:tildaapi.com",
+            "domain:tns-counter.ru",
+            "domain:trvl.yandex.net",
+            "domain:tutu.ru",
+            "domain:vk.com",
+            "domain:vk.ru",
+            "domain:vkvideo.ru",
+            "domain:vtb.ru",
+            "domain:x5.ru",
+            "domain:ya.ru",
+            "domain:yandex.ru",
+            "domain:yandex.net",
+            "domain:yandex.com",
+            "domain:yastatic.net",
+            "domain:yandexcloud.net",
+            "full:go.yandex",
+            "full:ru.ruwiki.ru",
+            "domain:xn--90acagbhgpca7c8c7f.xn--p1ai",
+            "domain:xn--80ajghhoc2aj1c8b.xn--p1ai",
+            "domain:xn--90aivcdt6dxbc.xn--p1ai",
+            "domain:xn--b1aew.xn--p1ai",
+            "domain:api.oneme.ru",
+            "domain:fd.oneme.ru",
+            "domain:i.oneme.ru",
+            "domain:miniapps.max.ru",
+            "domain:sdk-api.apptracer.ru",
+            "domain:st.max.ru",
+            "domain:tracker-api.vk-analytics.ru"
           ],
           "outboundTag": "direct"
         },
@@ -1422,7 +1787,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1452,7 +1818,8 @@
             "shortId": "c64556c616970b14",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1482,7 +1849,8 @@
             "shortId": "a7ec6c3316eddb11",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1512,7 +1880,8 @@
             "shortId": "ed7b9bdfedb9b8e5",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1542,7 +1911,8 @@
             "shortId": "c64556c616970b14",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1572,7 +1942,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1602,7 +1973,8 @@
             "shortId": "a7ec6c3316eddb11",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1632,7 +2004,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1662,7 +2035,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1692,7 +2066,8 @@
             "shortId": "e069bfaf9ba2069c",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1722,7 +2097,8 @@
             "shortId": "c64556c616970b14",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1752,7 +2128,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1782,7 +2159,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1812,7 +2190,8 @@
             "shortId": "b28896ec1669a951",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1842,7 +2221,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1872,7 +2252,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1902,7 +2283,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1932,7 +2314,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1962,7 +2345,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -1992,7 +2376,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2022,7 +2407,8 @@
             "shortId": "34256b39b4ebb864",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2052,7 +2438,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2082,7 +2469,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2112,7 +2500,8 @@
             "shortId": "e80a3158be637ee1",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2142,7 +2531,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2172,7 +2562,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2202,7 +2593,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2232,7 +2624,8 @@
             "shortId": "6c88854e73e86773",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2262,7 +2655,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2292,7 +2686,8 @@
             "shortId": "e069bfaf9ba2069c",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2308,18 +2703,38 @@
       {
         "tag": "socks",
         "port": 10808,
+        "listen": "127.0.0.1",
         "protocol": "socks",
         "settings": {
           "udp": true,
           "auth": "noauth"
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       },
       {
         "tag": "http",
         "port": 10809,
+        "listen": "127.0.0.1",
         "protocol": "http",
         "settings": {
           "allowTransparent": false
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       }
     ]
@@ -2333,7 +2748,15 @@
       "probeUrl": "https://www.google.com/generate_204",
       "probeInterval": "10s"
     },
+    "dns": {
+      "servers": [
+        "https://8.8.8.8/dns-query",
+        "https://8.8.8.8/dns-query"
+      ],
+      "queryStrategy": "UseIP"
+    },
     "routing": {
+      "domainMatcher": "hybrid",
       "domainStrategy": "IPIfNonMatch",
       "balancers": [
         {
@@ -2351,6 +2774,93 @@
           "type": "field",
           "protocol": [
             "bittorrent"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "max.ru",
+            "domain:2gis.ru",
+            "domain:ads.x5.ru",
+            "domain:2gis.com",
+            "domain:aif.ru",
+            "domain:aeroflot.ru",
+            "domain:alfabank.ru",
+            "domain:avito.ru",
+            "domain:beeline.ru",
+            "domain:burgerkingrus.ru",
+            "domain:dellin.ru",
+            "domain:drive2.ru",
+            "domain:dzen.ru",
+            "domain:flypobeda.ru",
+            "domain:forbes.ru",
+            "domain:gazeta.ru",
+            "domain:gazprombank.ru",
+            "domain:gismeteo.ru",
+            "domain:gosuslugi.ru",
+            "domain:hh.ru",
+            "domain:kontur.ru",
+            "domain:kontur.host",
+            "domain:kp.ru",
+            "domain:kuper.ru",
+            "domain:lenta.ru",
+            "domain:mail.ru",
+            "domain:max.ru",
+            "domain:megamarket.ru",
+            "domain:megamarket.tech",
+            "domain:megafon.ru",
+            "domain:moex.com",
+            "domain:motivtelecom.ru",
+            "domain:ozon.ru",
+            "domain:pervye.ru",
+            "domain:psbank.ru",
+            "domain:rambler.ru",
+            "domain:rambler-co.ru",
+            "domain:rbc.ru",
+            "domain:reg.ru",
+            "domain:reviews.2gis.com",
+            "domain:rg.ru",
+            "domain:ria.ru",
+            "domain:ruwiki.ru",
+            "domain:rustore.ru",
+            "domain:rutube.ru",
+            "domain:rzd.ru",
+            "domain:sirena-travel.ru",
+            "domain:sravni.ru",
+            "domain:t-j.ru",
+            "domain:t2.ru",
+            "domain:tank-online.com",
+            "domain:taximaxim.ru",
+            "domain:tbank-online.com",
+            "domain:tildaapi.com",
+            "domain:tns-counter.ru",
+            "domain:trvl.yandex.net",
+            "domain:tutu.ru",
+            "domain:vk.com",
+            "domain:vk.ru",
+            "domain:vkvideo.ru",
+            "domain:vtb.ru",
+            "domain:x5.ru",
+            "domain:ya.ru",
+            "domain:yandex.ru",
+            "domain:yandex.net",
+            "domain:yandex.com",
+            "domain:yastatic.net",
+            "domain:yandexcloud.net",
+            "full:go.yandex",
+            "full:ru.ruwiki.ru",
+            "domain:xn--90acagbhgpca7c8c7f.xn--p1ai",
+            "domain:xn--80ajghhoc2aj1c8b.xn--p1ai",
+            "domain:xn--90aivcdt6dxbc.xn--p1ai",
+            "domain:xn--b1aew.xn--p1ai",
+            "domain:api.oneme.ru",
+            "domain:fd.oneme.ru",
+            "domain:i.oneme.ru",
+            "domain:miniapps.max.ru",
+            "domain:sdk-api.apptracer.ru",
+            "domain:st.max.ru",
+            "domain:tracker-api.vk-analytics.ru"
           ],
           "outboundTag": "direct"
         },
@@ -2397,7 +2907,8 @@
             "shortId": "0bd0285f0c4f8f05",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2427,7 +2938,8 @@
             "shortId": "fe12",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2457,7 +2969,8 @@
             "shortId": "57e7bb88",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2487,7 +3000,8 @@
             "shortId": "cb4d31a32bc04d7e",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2517,7 +3031,8 @@
             "shortId": "fe12",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2547,7 +3062,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2577,7 +3093,8 @@
             "shortId": "3dd59833",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2607,7 +3124,8 @@
             "shortId": "1680",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2637,7 +3155,8 @@
             "shortId": "5e3ab3ab228625",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2667,7 +3186,8 @@
             "shortId": "1680",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2697,7 +3217,8 @@
             "shortId": "5e3ab3ab228625",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2727,7 +3248,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2757,7 +3279,8 @@
             "shortId": "5a55",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2787,7 +3310,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2817,7 +3341,8 @@
             "shortId": "fe12",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2847,7 +3372,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2877,7 +3403,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2907,7 +3434,8 @@
             "shortId": "eba1498e012ef580",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2937,7 +3465,8 @@
             "shortId": "57e7bb88",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2967,7 +3496,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -2997,6 +3527,10 @@
             "shortId": "ffffffffff",
             "fingerprint": "firefox",
             "show": false
+          },
+          "grpcSettings": {
+            "serviceName": "",
+            "multiMode": true
           }
         }
       },
@@ -3027,7 +3561,8 @@
             "shortId": "d0a1665d1b96515e",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3057,7 +3592,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3117,7 +3653,8 @@
             "shortId": "fe12",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3147,7 +3684,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3177,7 +3715,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3207,7 +3746,8 @@
             "shortId": "1680",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3237,7 +3777,8 @@
             "shortId": "9902cda1645757ea",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3267,7 +3808,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3283,18 +3825,38 @@
       {
         "tag": "socks",
         "port": 10808,
+        "listen": "127.0.0.1",
         "protocol": "socks",
         "settings": {
           "udp": true,
           "auth": "noauth"
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       },
       {
         "tag": "http",
         "port": 10809,
+        "listen": "127.0.0.1",
         "protocol": "http",
         "settings": {
           "allowTransparent": false
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       }
     ]
@@ -3308,7 +3870,15 @@
       "probeUrl": "https://www.google.com/generate_204",
       "probeInterval": "10s"
     },
+    "dns": {
+      "servers": [
+        "https://8.8.8.8/dns-query",
+        "https://8.8.8.8/dns-query"
+      ],
+      "queryStrategy": "UseIP"
+    },
     "routing": {
+      "domainMatcher": "hybrid",
       "domainStrategy": "IPIfNonMatch",
       "balancers": [
         {
@@ -3326,6 +3896,93 @@
           "type": "field",
           "protocol": [
             "bittorrent"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "max.ru",
+            "domain:2gis.ru",
+            "domain:ads.x5.ru",
+            "domain:2gis.com",
+            "domain:aif.ru",
+            "domain:aeroflot.ru",
+            "domain:alfabank.ru",
+            "domain:avito.ru",
+            "domain:beeline.ru",
+            "domain:burgerkingrus.ru",
+            "domain:dellin.ru",
+            "domain:drive2.ru",
+            "domain:dzen.ru",
+            "domain:flypobeda.ru",
+            "domain:forbes.ru",
+            "domain:gazeta.ru",
+            "domain:gazprombank.ru",
+            "domain:gismeteo.ru",
+            "domain:gosuslugi.ru",
+            "domain:hh.ru",
+            "domain:kontur.ru",
+            "domain:kontur.host",
+            "domain:kp.ru",
+            "domain:kuper.ru",
+            "domain:lenta.ru",
+            "domain:mail.ru",
+            "domain:max.ru",
+            "domain:megamarket.ru",
+            "domain:megamarket.tech",
+            "domain:megafon.ru",
+            "domain:moex.com",
+            "domain:motivtelecom.ru",
+            "domain:ozon.ru",
+            "domain:pervye.ru",
+            "domain:psbank.ru",
+            "domain:rambler.ru",
+            "domain:rambler-co.ru",
+            "domain:rbc.ru",
+            "domain:reg.ru",
+            "domain:reviews.2gis.com",
+            "domain:rg.ru",
+            "domain:ria.ru",
+            "domain:ruwiki.ru",
+            "domain:rustore.ru",
+            "domain:rutube.ru",
+            "domain:rzd.ru",
+            "domain:sirena-travel.ru",
+            "domain:sravni.ru",
+            "domain:t-j.ru",
+            "domain:t2.ru",
+            "domain:tank-online.com",
+            "domain:taximaxim.ru",
+            "domain:tbank-online.com",
+            "domain:tildaapi.com",
+            "domain:tns-counter.ru",
+            "domain:trvl.yandex.net",
+            "domain:tutu.ru",
+            "domain:vk.com",
+            "domain:vk.ru",
+            "domain:vkvideo.ru",
+            "domain:vtb.ru",
+            "domain:x5.ru",
+            "domain:ya.ru",
+            "domain:yandex.ru",
+            "domain:yandex.net",
+            "domain:yandex.com",
+            "domain:yastatic.net",
+            "domain:yandexcloud.net",
+            "full:go.yandex",
+            "full:ru.ruwiki.ru",
+            "domain:xn--90acagbhgpca7c8c7f.xn--p1ai",
+            "domain:xn--80ajghhoc2aj1c8b.xn--p1ai",
+            "domain:xn--90aivcdt6dxbc.xn--p1ai",
+            "domain:xn--b1aew.xn--p1ai",
+            "domain:api.oneme.ru",
+            "domain:fd.oneme.ru",
+            "domain:i.oneme.ru",
+            "domain:miniapps.max.ru",
+            "domain:sdk-api.apptracer.ru",
+            "domain:st.max.ru",
+            "domain:tracker-api.vk-analytics.ru"
           ],
           "outboundTag": "direct"
         },
@@ -3372,7 +4029,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3402,7 +4060,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3432,7 +4091,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3455,7 +4115,13 @@
         },
         "streamSettings": {
           "network": "ws",
-          "security": "none"
+          "security": "none",
+          "wsSettings": {
+            "path": "/",
+            "headers": {
+              "Host": "khodroshop.ir"
+            }
+          }
         }
       },
       {
@@ -3485,7 +4151,8 @@
             "shortId": "1680",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3515,7 +4182,8 @@
             "shortId": "d0a1665d1b96515e",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3545,7 +4213,8 @@
             "shortId": "1680",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3575,7 +4244,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3605,7 +4275,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3635,7 +4306,8 @@
             "shortId": "eba1498e012ef580",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3665,7 +4337,8 @@
             "shortId": "c6fb13b1add66fbe",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3695,7 +4368,8 @@
             "shortId": "4a",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3725,7 +4399,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3785,7 +4460,8 @@
             "shortId": "16",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3845,7 +4521,8 @@
             "shortId": "1680",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3905,7 +4582,8 @@
             "shortId": "",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3935,7 +4613,8 @@
             "shortId": "fb9dfa2f",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3965,7 +4644,8 @@
             "shortId": "5701e710c025b4b8",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -3995,7 +4675,8 @@
             "shortId": "fe12",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4025,7 +4706,8 @@
             "shortId": "ef59",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4055,7 +4737,8 @@
             "shortId": "a4e1fd84",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4085,7 +4768,8 @@
             "shortId": "fe12",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4115,7 +4799,8 @@
             "shortId": "1eb16f60",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4145,7 +4830,8 @@
             "shortId": "4a",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4175,7 +4861,8 @@
             "shortId": "a2346cd0",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4205,7 +4892,8 @@
             "shortId": "8bcfe256cf216fd8",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4235,7 +4923,8 @@
             "shortId": "1eb16f60",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4251,18 +4940,38 @@
       {
         "tag": "socks",
         "port": 10808,
+        "listen": "127.0.0.1",
         "protocol": "socks",
         "settings": {
           "udp": true,
           "auth": "noauth"
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       },
       {
         "tag": "http",
         "port": 10809,
+        "listen": "127.0.0.1",
         "protocol": "http",
         "settings": {
           "allowTransparent": false
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       }
     ]
@@ -4276,7 +4985,15 @@
       "probeUrl": "https://www.google.com/generate_204",
       "probeInterval": "10s"
     },
+    "dns": {
+      "servers": [
+        "https://8.8.8.8/dns-query",
+        "https://8.8.8.8/dns-query"
+      ],
+      "queryStrategy": "UseIP"
+    },
     "routing": {
+      "domainMatcher": "hybrid",
       "domainStrategy": "IPIfNonMatch",
       "balancers": [
         {
@@ -4294,6 +5011,93 @@
           "type": "field",
           "protocol": [
             "bittorrent"
+          ],
+          "outboundTag": "direct"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "max.ru",
+            "domain:2gis.ru",
+            "domain:ads.x5.ru",
+            "domain:2gis.com",
+            "domain:aif.ru",
+            "domain:aeroflot.ru",
+            "domain:alfabank.ru",
+            "domain:avito.ru",
+            "domain:beeline.ru",
+            "domain:burgerkingrus.ru",
+            "domain:dellin.ru",
+            "domain:drive2.ru",
+            "domain:dzen.ru",
+            "domain:flypobeda.ru",
+            "domain:forbes.ru",
+            "domain:gazeta.ru",
+            "domain:gazprombank.ru",
+            "domain:gismeteo.ru",
+            "domain:gosuslugi.ru",
+            "domain:hh.ru",
+            "domain:kontur.ru",
+            "domain:kontur.host",
+            "domain:kp.ru",
+            "domain:kuper.ru",
+            "domain:lenta.ru",
+            "domain:mail.ru",
+            "domain:max.ru",
+            "domain:megamarket.ru",
+            "domain:megamarket.tech",
+            "domain:megafon.ru",
+            "domain:moex.com",
+            "domain:motivtelecom.ru",
+            "domain:ozon.ru",
+            "domain:pervye.ru",
+            "domain:psbank.ru",
+            "domain:rambler.ru",
+            "domain:rambler-co.ru",
+            "domain:rbc.ru",
+            "domain:reg.ru",
+            "domain:reviews.2gis.com",
+            "domain:rg.ru",
+            "domain:ria.ru",
+            "domain:ruwiki.ru",
+            "domain:rustore.ru",
+            "domain:rutube.ru",
+            "domain:rzd.ru",
+            "domain:sirena-travel.ru",
+            "domain:sravni.ru",
+            "domain:t-j.ru",
+            "domain:t2.ru",
+            "domain:tank-online.com",
+            "domain:taximaxim.ru",
+            "domain:tbank-online.com",
+            "domain:tildaapi.com",
+            "domain:tns-counter.ru",
+            "domain:trvl.yandex.net",
+            "domain:tutu.ru",
+            "domain:vk.com",
+            "domain:vk.ru",
+            "domain:vkvideo.ru",
+            "domain:vtb.ru",
+            "domain:x5.ru",
+            "domain:ya.ru",
+            "domain:yandex.ru",
+            "domain:yandex.net",
+            "domain:yandex.com",
+            "domain:yastatic.net",
+            "domain:yandexcloud.net",
+            "full:go.yandex",
+            "full:ru.ruwiki.ru",
+            "domain:xn--90acagbhgpca7c8c7f.xn--p1ai",
+            "domain:xn--80ajghhoc2aj1c8b.xn--p1ai",
+            "domain:xn--90aivcdt6dxbc.xn--p1ai",
+            "domain:xn--b1aew.xn--p1ai",
+            "domain:api.oneme.ru",
+            "domain:fd.oneme.ru",
+            "domain:i.oneme.ru",
+            "domain:miniapps.max.ru",
+            "domain:sdk-api.apptracer.ru",
+            "domain:st.max.ru",
+            "domain:tracker-api.vk-analytics.ru"
           ],
           "outboundTag": "direct"
         },
@@ -4333,7 +5137,10 @@
         },
         "streamSettings": {
           "network": "ws",
-          "security": "none"
+          "security": "none",
+          "wsSettings": {
+            "path": "/"
+          }
         }
       },
       {
@@ -4363,7 +5170,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4393,7 +5201,8 @@
             "shortId": "fe12",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4423,7 +5232,8 @@
             "shortId": "06cbfdd7",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4453,7 +5263,8 @@
             "shortId": "ef01859eafef126d",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4483,7 +5294,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4513,7 +5325,8 @@
             "shortId": "eba1498e012ef580",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4543,7 +5356,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4573,6 +5387,10 @@
             "shortId": "5d",
             "fingerprint": "firefox",
             "show": false
+          },
+          "grpcSettings": {
+            "serviceName": "",
+            "multiMode": true
           }
         }
       },
@@ -4603,7 +5421,8 @@
             "shortId": "1a",
             "fingerprint": "chrome",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4633,7 +5452,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4663,7 +5483,8 @@
             "shortId": "7d6203949764f921",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4693,7 +5514,8 @@
             "shortId": "a4e1fd84",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4723,7 +5545,8 @@
             "shortId": "3620820fe66d6731",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4753,7 +5576,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4783,7 +5607,8 @@
             "shortId": "ef01859eafef126d",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4806,7 +5631,8 @@
         },
         "streamSettings": {
           "network": "tcp",
-          "security": "none"
+          "security": "none",
+          "tcpSettings": {}
         }
       },
       {
@@ -4836,7 +5662,8 @@
             "shortId": "d0a1665d1b96515e",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4866,7 +5693,8 @@
             "shortId": "5701e710c025b4b8",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4896,7 +5724,8 @@
             "shortId": "d0a1665d1b96515e",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4926,7 +5755,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4956,7 +5786,8 @@
             "shortId": "9902cda1645757ea",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -4986,7 +5817,8 @@
             "shortId": "",
             "fingerprint": "firefox",
             "show": false
-          }
+          },
+          "tcpSettings": {}
         }
       },
       {
@@ -5002,18 +5834,38 @@
       {
         "tag": "socks",
         "port": 10808,
+        "listen": "127.0.0.1",
         "protocol": "socks",
         "settings": {
           "udp": true,
           "auth": "noauth"
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       },
       {
         "tag": "http",
         "port": 10809,
+        "listen": "127.0.0.1",
         "protocol": "http",
         "settings": {
           "allowTransparent": false
+        },
+        "sniffing": {
+          "enabled": true,
+          "routeOnly": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic"
+          ]
         }
       }
     ]
