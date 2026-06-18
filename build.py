@@ -32,7 +32,7 @@ def check_location(ip, original_name):
     return 'EU'
 
 def is_valid_uuid(val):
-    """Проверка на то, что ID это настоящий UUID, иначе Xray крашится"""
+    """Защита ядра Xray от краша из-за битых ID"""
     try:
         uuid.UUID(str(val))
         return True
@@ -40,19 +40,13 @@ def is_valid_uuid(val):
         return False
 
 def parse_vless_link(link, tag_name):
-    """Жесткая фильтрация и парсинг ссылки"""
     try:
         parsed = urllib.parse.urlparse(link)
         user_id = parsed.username
         address = parsed.hostname
         port = int(parsed.port) if parsed.port else 443 
         
-        # 1. Защита от пустых IP и битых портов
-        if not address or not (1 <= port <= 65535): 
-            return None
-            
-        # 2. Защита от кривых UUID (главная причина краша ядра)
-        if not is_valid_uuid(user_id):
+        if not address or not (1 <= port <= 65535) or not is_valid_uuid(user_id): 
             return None
 
         params = urllib.parse.parse_qs(parsed.query)
@@ -62,7 +56,6 @@ def parse_vless_link(link, tag_name):
 
         user_obj = {"id": user_id, "encryption": "none", "flow": flow if flow else ""}
         
-        # Ограничиваем известными протоколами
         if network not in ['tcp', 'ws', 'grpc', 'xhttp', 'http', 'kcp', 'quic']:
             network = 'tcp'
             
@@ -88,30 +81,21 @@ def parse_vless_link(link, tag_name):
             if fp: 
                 stream_settings["tlsSettings"]["fingerprint"] = fp
 
-        # Специфичные настройки транспорта
         if network == "tcp":
             stream_settings["tcpSettings"] = {}
         elif network == "ws":
             stream_settings["wsSettings"] = {"path": params.get('path', ['/'])[0]}
             host = params.get('host', [''])[0]
-            if host: 
-                stream_settings["wsSettings"]["headers"] = {"Host": host}
+            if host: stream_settings["wsSettings"]["headers"] = {"Host": host}
         elif network == "grpc":
             svc = params.get('serviceName', [''])[0]
-            if not svc: 
-                svc = params.get('path', [''])[0] # Иногда лежит в path
+            if not svc: svc = params.get('path', [''])[0]
             stream_settings["grpcSettings"] = {"serviceName": svc, "multiMode": True}
 
         return {
             "tag": tag_name,
             "protocol": "vless",
-            "settings": {
-                "vnext": [{
-                    "address": address,
-                    "port": port,
-                    "users": [user_obj]
-                }]
-            },
+            "settings": {"vnext": [{"address": address, "port": port, "users": [user_obj]}]},
             "streamSettings": stream_settings
         }
     except Exception:
@@ -121,15 +105,13 @@ def generate_profile(name, servers_chunk):
     outbounds = []
     valid_count = 0
     
-    # Собираем только 100% рабочие по структуре аутбаунды
     for link in servers_chunk:
-        tag = f"proxy_{valid_count}"
+        tag = "proxy" if valid_count == 0 else f"proxy_{valid_count}"
         parsed_outbound = parse_vless_link(link, tag)
         if parsed_outbound:
             outbounds.append(parsed_outbound)
             valid_count += 1
             
-    # Защита от "пустых" профилей, которые крашат балансировщик
     if valid_count == 0:
         return None
         
@@ -139,7 +121,7 @@ def generate_profile(name, servers_chunk):
     profile = {
         "remarks": name,
         "observatory": {
-            "subjectSelector": ["proxy_"],
+            "subjectSelector": ["proxy"],
             "probeUrl": "https://www.google.com/generate_204",
             "probeInterval": "10s"
         },
@@ -152,7 +134,7 @@ def generate_profile(name, servers_chunk):
             "domainStrategy": "IPIfNonMatch",
             "balancers": [{
                 "tag": "best_ping_balancer",
-                "selector": ["proxy_"],
+                "selector": ["proxy"],
                 "strategy": {"type": "leastPing"}
             }],
             "rules": [
@@ -218,12 +200,18 @@ def main():
         try:
             r = requests.get(url, timeout=10)
             if r.status_code == 200:
-                try:
-                    lines = decode_base64(r.text.strip()).splitlines()
-                except:
-                    lines = r.text.splitlines()
+                text = r.text.strip()
+                # ФИКС: Умная проверка - если это не Base64, берем сразу как текст
+                if 'vless://' in text or 'vmess://' in text:
+                    lines = text.splitlines()
+                else:
+                    try:
+                        lines = decode_base64(text).splitlines()
+                    except:
+                        lines = text.splitlines()
                 raw_links.extend(lines)
-        except: pass
+        except Exception as e:
+            print(f"Ошибка {url}: {e}")
 
     ru_links = []
     eu_links = []
