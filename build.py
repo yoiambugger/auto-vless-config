@@ -4,6 +4,7 @@ import json
 import re
 import base64
 import time
+import uuid
 
 SOURCES = [
     "https://raw.githubusercontent.com/luxxuria/harvester/refs/heads/main/top_600.txt",
@@ -30,30 +31,47 @@ def check_location(ip, original_name):
             pass
     return 'EU'
 
+def is_valid_uuid(val):
+    """Проверка на то, что ID это настоящий UUID, иначе Xray крашится"""
+    try:
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
+
 def parse_vless_link(link, tag_name):
-    """Детальный парсинг ссылки, чтобы Xray Core не крашился из-за нехватки параметров"""
+    """Жесткая фильтрация и парсинг ссылки"""
     try:
         parsed = urllib.parse.urlparse(link)
         user_id = parsed.username
         address = parsed.hostname
-        # Устанавливаем порт по умолчанию, если его нет
         port = int(parsed.port) if parsed.port else 443 
+        
+        # 1. Защита от пустых IP и битых портов
+        if not address or not (1 <= port <= 65535): 
+            return None
+            
+        # 2. Защита от кривых UUID (главная причина краша ядра)
+        if not is_valid_uuid(user_id):
+            return None
+
         params = urllib.parse.parse_qs(parsed.query)
-
         flow = params.get('flow', [''])[0]
-        user_obj = {"id": user_id, "encryption": "none"}
-        user_obj["flow"] = flow if flow else "" # Оставляем пустым, как в твоем конфиге
-
         network = params.get('type', ['tcp'])[0]
         security = params.get('security', ['none'])[0]
 
+        user_obj = {"id": user_id, "encryption": "none", "flow": flow if flow else ""}
+        
+        # Ограничиваем известными протоколами
+        if network not in ['tcp', 'ws', 'grpc', 'xhttp', 'http', 'kcp', 'quic']:
+            network = 'tcp'
+            
         stream_settings = {
             "network": network,
-            "security": security
+            "security": security if security in ['none', 'tls', 'reality'] else 'none'
         }
 
-        # Настройки безопасности (Reality / TLS)
-        if security == "reality":
+        if stream_settings["security"] == "reality":
             stream_settings["realitySettings"] = {
                 "serverName": params.get('sni', [''])[0],
                 "publicKey": params.get('pbk', [''])[0],
@@ -61,30 +79,28 @@ def parse_vless_link(link, tag_name):
                 "fingerprint": params.get('fp', ['chrome'])[0],
                 "show": False
             }
-        elif security == "tls":
+        elif stream_settings["security"] == "tls":
             stream_settings["tlsSettings"] = {
                 "serverName": params.get('sni', [address])[0],
                 "show": False
             }
             fp = params.get('fp', [''])[0]
-            if fp:
+            if fp: 
                 stream_settings["tlsSettings"]["fingerprint"] = fp
 
-        # Настройки транспорта (КРИТИЧНО для избежания "н/д")
-        if network == "ws":
-            ws_path = params.get('path', ['/'])[0]
-            ws_host = params.get('host', [''])[0]
-            stream_settings["wsSettings"] = {"path": ws_path}
-            if ws_host:
-                stream_settings["wsSettings"]["headers"] = {"Host": ws_host}
-        elif network == "grpc":
-            service_name = params.get('serviceName', [''])[0]
-            stream_settings["grpcSettings"] = {
-                "serviceName": service_name,
-                "multiMode": True
-            }
-        elif network == "tcp":
+        # Специфичные настройки транспорта
+        if network == "tcp":
             stream_settings["tcpSettings"] = {}
+        elif network == "ws":
+            stream_settings["wsSettings"] = {"path": params.get('path', ['/'])[0]}
+            host = params.get('host', [''])[0]
+            if host: 
+                stream_settings["wsSettings"]["headers"] = {"Host": host}
+        elif network == "grpc":
+            svc = params.get('serviceName', [''])[0]
+            if not svc: 
+                svc = params.get('path', [''])[0] # Иногда лежит в path
+            stream_settings["grpcSettings"] = {"serviceName": svc, "multiMode": True}
 
         return {
             "tag": tag_name,
@@ -98,21 +114,25 @@ def parse_vless_link(link, tag_name):
             },
             "streamSettings": stream_settings
         }
-    except Exception as e:
+    except Exception:
         return None
 
 def generate_profile(name, servers_chunk):
-    """Генерация финального профиля с доменами-исключениями и балансировщиком"""
     outbounds = []
-    tags = []
+    valid_count = 0
     
-    for i, link in enumerate(servers_chunk):
-        tag = f"proxy_{i}"
+    # Собираем только 100% рабочие по структуре аутбаунды
+    for link in servers_chunk:
+        tag = f"proxy_{valid_count}"
         parsed_outbound = parse_vless_link(link, tag)
         if parsed_outbound:
             outbounds.append(parsed_outbound)
-            tags.append(tag)
+            valid_count += 1
             
+    # Защита от "пустых" профилей, которые крашат балансировщик
+    if valid_count == 0:
+        return None
+        
     outbounds.append({"tag": "direct", "protocol": "freedom"})
     outbounds.append({"tag": "block", "protocol": "blackhole"})
 
@@ -124,10 +144,7 @@ def generate_profile(name, servers_chunk):
             "probeInterval": "10s"
         },
         "dns": {
-            "servers": [
-                "https://8.8.8.8/dns-query",
-                "https://8.8.8.8/dns-query"
-            ],
+            "servers": ["https://8.8.8.8/dns-query", "https://8.8.8.8/dns-query"],
             "queryStrategy": "UseIP"
         },
         "routing": {
@@ -139,11 +156,7 @@ def generate_profile(name, servers_chunk):
                 "strategy": {"type": "leastPing"}
             }],
             "rules": [
-                {
-                    "type": "field",
-                    "protocol": ["bittorrent"],
-                    "outboundTag": "direct"
-                },
+                {"type": "field", "protocol": ["bittorrent"], "outboundTag": "direct"},
                 {
                     "type": "field",
                     "domain": [
@@ -172,19 +185,10 @@ def generate_profile(name, servers_chunk):
                     ],
                     "outboundTag": "direct"
                 },
-                {
-                    "type": "field",
-                    "domain": ["geosite:telegram", "domain:t.me"],
-                    "balancerTag": "best_ping_balancer"
-                },
-                {
-                    "type": "field",
-                    "network": "tcp,udp",
-                    "balancerTag": "best_ping_balancer"
-                }
+                {"type": "field", "domain": ["geosite:telegram", "domain:telegram.org", "domain:t.me"], "balancerTag": "best_ping_balancer"},
+                {"type": "field", "network": "tcp,udp", "balancerTag": "best_ping_balancer"}
             ]
         },
-        "outbounds": outbounds,
         "inbounds": [
             {
                 "tag": "socks",
@@ -192,11 +196,7 @@ def generate_profile(name, servers_chunk):
                 "listen": "127.0.0.1",
                 "protocol": "socks",
                 "settings": {"udp": True, "auth": "noauth"},
-                "sniffing": {
-                    "enabled": True,
-                    "routeOnly": True,
-                    "destOverride": ["http", "tls", "quic"]
-                }
+                "sniffing": {"enabled": True, "routeOnly": True, "destOverride": ["http", "tls", "quic"]}
             },
             {
                 "tag": "http",
@@ -204,11 +204,7 @@ def generate_profile(name, servers_chunk):
                 "listen": "127.0.0.1",
                 "protocol": "http",
                 "settings": {"allowTransparent": False},
-                "sniffing": {
-                    "enabled": True,
-                    "routeOnly": True,
-                    "destOverride": ["http", "tls", "quic"]
-                }
+                "sniffing": {"enabled": True, "routeOnly": True, "destOverride": ["http", "tls", "quic"]}
             }
         ]
     }
@@ -217,58 +213,48 @@ def generate_profile(name, servers_chunk):
 def main():
     raw_links = []
     
-    print("Начинаю скачивание источников...")
+    print("Скачивание...")
     for url in SOURCES:
         try:
             r = requests.get(url, timeout=10)
             if r.status_code == 200:
                 try:
-                    decoded_text = decode_base64(r.text.strip())
-                    lines = decoded_text.splitlines()
+                    lines = decode_base64(r.text.strip()).splitlines()
                 except:
                     lines = r.text.splitlines()
                 raw_links.extend(lines)
-        except Exception as e:
-            print(f"Ошибка парсинга {url}: {e}")
+        except: pass
 
     ru_links = []
     eu_links = []
     
-    print(f"Всего получено строк: {len(raw_links)}")
-    print("Сортирую по гео-локации...")
-    
     for link in raw_links:
         link = link.strip()
-        if not link.startswith('vless://'): 
-            continue
+        if not link.startswith('vless://'): continue
         
-        host_match = re.search(r'@([^:]+):', link)
+        parsed = urllib.parse.urlparse(link)
+        ip = parsed.hostname
         name_match = re.search(r'#(.*)$', link)
-        ip = host_match.group(1) if host_match else None
         name = name_match.group(1) if name_match else ""
         
-        if check_location(ip, name) == 'RU': 
-            ru_links.append(link)
-        else: 
-            eu_links.append(link)
+        if check_location(ip, name) == 'RU': ru_links.append(link)
+        else: eu_links.append(link)
 
     final_json_array = []
     chunk_size = 30
     
     for i in range(0, len(ru_links), chunk_size):
-        chunk = ru_links[i:i + chunk_size]
-        profile_num = (i // chunk_size) + 1
-        final_json_array.append(generate_profile(f"🇲🇦 🗽 LTE RU {profile_num} | t.me/telegaproxys", chunk))
+        profile = generate_profile(f"🇲🇦 🗽 LTE RU {(i // chunk_size) + 1} | t.me/telegaproxys", ru_links[i:i + chunk_size])
+        if profile: final_json_array.append(profile)
 
     for i in range(0, len(eu_links), chunk_size):
-        chunk = eu_links[i:i + chunk_size]
-        profile_num = (i // chunk_size) + 1
-        final_json_array.append(generate_profile(f"🇲🇦 🗽 LTE EU {profile_num} | t.me/telegaproxys", chunk))
+        profile = generate_profile(f"🇲🇦 🗽 LTE EU {(i // chunk_size) + 1} | t.me/telegaproxys", eu_links[i:i + chunk_size])
+        if profile: final_json_array.append(profile)
 
     with open('custom_sub.json', 'w', encoding='utf-8') as f:
         json.dump(final_json_array, f, indent=2, ensure_ascii=False)
         
-    print(f"Успех! Собрано RU серверов: {len(ru_links)}, EU серверов: {len(eu_links)}")
+    print(f"Готово! Создано профилей: {len(final_json_array)}")
 
 if __name__ == "__main__":
     main()
