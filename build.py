@@ -4,7 +4,6 @@ import json
 import re
 import base64
 import time
-import uuid
 
 SOURCES = [
     "https://raw.githubusercontent.com/luxxuria/harvester/refs/heads/main/top_600.txt",
@@ -100,27 +99,66 @@ def parse_vless_link(link, tag_name):
 
 def generate_profile(name, servers_chunk):
     outbounds = []
-    valid_count = 0
-    for link in servers_chunk:
-        tag = "proxy" if valid_count == 0 else f"proxy_{valid_count}"
+    tags = [] # Список точных имен для обсерватории
+    
+    for i, link in enumerate(servers_chunk):
+        # Формируем теги как в твоем примере (cand-01, cand-02...)
+        tag = f"cand-{i+1:02d}"
         parsed = parse_vless_link(link, tag)
         if parsed:
             outbounds.append(parsed)
-            valid_count += 1
+            tags.append(tag)
             
-    if valid_count == 0: return None
+    if not tags: return None
         
     outbounds.append({"tag": "direct", "protocol": "freedom"})
     outbounds.append({"tag": "block", "protocol": "blackhole"})
 
+    # Структура 1-в-1 как в твоем "Нидерланды" конфиге
     return {
         "remarks": name,
-        "observatory": {"subjectSelector": ["proxy"], "probeUrl": "https://www.google.com/generate_204", "probeInterval": "10s"},
-        "dns": {"servers": ["https://8.8.8.8/dns-query", "https://8.8.8.8/dns-query"], "queryStrategy": "UseIP"},
+        "dns": {
+            "servers": ["https://8.8.8.8/dns-query", "https://8.8.8.8/dns-query"],
+            "queryStrategy": "UseIP"
+        },
+        "inbounds": [
+            {
+                "tag": "socks",
+                "port": 10808,
+                "listen": "127.0.0.1",
+                "protocol": "socks",
+                "settings": {"udp": True, "auth": "noauth"},
+                "sniffing": {"enabled": True, "routeOnly": True, "destOverride": ["http", "tls", "quic"]}
+            },
+            {
+                "tag": "http",
+                "port": 10809,
+                "listen": "127.0.0.1",
+                "protocol": "http",
+                "settings": {"allowTransparent": False},
+                "sniffing": {"enabled": True, "routeOnly": True, "destOverride": ["http", "tls", "quic"]}
+            }
+        ],
+        "log": {
+            "loglevel": "warning"
+        },
+        "outbounds": outbounds,
+        "observatory": {
+            "enableConcurrency": True,
+            "probeInterval": "1m",
+            "probeUrl": "https://www.google.com/generate_204",
+            "subjectSelector": tags # Строго перечисляем все теги (cand-01, cand-02 и т.д.)
+        },
         "routing": {
             "domainMatcher": "hybrid",
             "domainStrategy": "IPIfNonMatch",
-            "balancers": [{"tag": "best_ping_balancer", "selector": ["proxy"], "strategy": {"type": "leastPing"}}],
+            "balancers": [
+                {
+                    "tag": "best_ping_balancer",
+                    "selector": tags, # Строго перечисляем теги
+                    "strategy": {"type": "leastPing"} # Ищем самый живой и быстрый
+                }
+            ],
             "rules": [
                 {"type": "field", "protocol": ["bittorrent"], "outboundTag": "direct"},
                 {
@@ -151,11 +189,14 @@ def generate_profile(name, servers_chunk):
                     ],
                     "outboundTag": "direct"
                 },
-                {"type": "field", "domain": ["geosite:telegram", "domain:telegram.org", "domain:t.me"], "balancerTag": "best_ping_balancer"},
-                {"type": "field", "network": "tcp,udp", "balancerTag": "best_ping_balancer"}
+                {
+                    "type": "field",
+                    "inboundTag": ["socks", "http"], # Привязка к Inbounds как в эталоне
+                    "network": "tcp,udp",
+                    "balancerTag": "best_ping_balancer"
+                }
             ]
         }
-        # БЛОК INBOUNDS УДАЛЕН НАВСЕГДА, ЧТОБЫ НЕ БЫЛО КОНФЛИКТА ПОРТОВ (Н/Д)
     }
 
 def main():
@@ -180,12 +221,13 @@ def main():
         except: continue
 
     final_json_array = []
-    for i in range(0, len(ru_links), 30):
-        profile = generate_profile(f"🇲🇦 🗽 LTE RU {(i // 30) + 1} | t.me/telegaproxys", ru_links[i:i + 30])
+    # ЧАНКИ ТЕПЕРЬ ПО 10 СЕРВЕРОВ!
+    for i in range(0, len(ru_links), 10):
+        profile = generate_profile(f"🇲🇦 🗽 LTE RU {(i // 10) + 1} | t.me/telegaproxys", ru_links[i:i + 10])
         if profile: final_json_array.append(profile)
 
-    for i in range(0, len(eu_links), 30):
-        profile = generate_profile(f"🇲🇦 🗽 LTE EU {(i // 30) + 1} | t.me/telegaproxys", eu_links[i:i + 30])
+    for i in range(0, len(eu_links), 10):
+        profile = generate_profile(f"🇲🇦 🗽 LTE EU {(i // 10) + 1} | t.me/telegaproxys", eu_links[i:i + 10])
         if profile: final_json_array.append(profile)
 
     with open('custom_sub.json', 'w', encoding='utf-8') as f:
