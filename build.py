@@ -7,7 +7,8 @@ import time
 
 SOURCES = [
     "https://raw.githubusercontent.com/luxxuria/harvester/refs/heads/main/top_600.txt",
-    "https://raw.githubusercontent.com/zieng2/wl/refs/heads/main/vless_universal.txt"
+    "https://raw.githubusercontent.com/zieng2/wl/refs/heads/main/vless_universal.txt",
+    "https://raw.githubusercontent.com/lm705/vair/refs/heads/main/vless_alive.txt"
 ]
 
 def get_links_from_text(text):
@@ -99,10 +100,9 @@ def parse_vless_link(link, tag_name):
 
 def generate_profile(name, servers_chunk):
     outbounds = []
-    tags = [] # Список точных имен для обсерватории
+    tags = [] 
     
     for i, link in enumerate(servers_chunk):
-        # Формируем теги как в твоем примере (cand-01, cand-02...)
         tag = f"cand-{i+1:02d}"
         parsed = parse_vless_link(link, tag)
         if parsed:
@@ -114,7 +114,6 @@ def generate_profile(name, servers_chunk):
     outbounds.append({"tag": "direct", "protocol": "freedom"})
     outbounds.append({"tag": "block", "protocol": "blackhole"})
 
-    # Структура 1-в-1 как в твоем "Нидерланды" конфиге
     return {
         "remarks": name,
         "dns": {
@@ -147,7 +146,7 @@ def generate_profile(name, servers_chunk):
             "enableConcurrency": True,
             "probeInterval": "1m",
             "probeUrl": "https://www.google.com/generate_204",
-            "subjectSelector": tags # Строго перечисляем все теги (cand-01, cand-02 и т.д.)
+            "subjectSelector": tags 
         },
         "routing": {
             "domainMatcher": "hybrid",
@@ -155,8 +154,8 @@ def generate_profile(name, servers_chunk):
             "balancers": [
                 {
                     "tag": "best_ping_balancer",
-                    "selector": tags, # Строго перечисляем теги
-                    "strategy": {"type": "leastPing"} # Ищем самый живой и быстрый
+                    "selector": tags, 
+                    "strategy": {"type": "leastPing"} 
                 }
             ],
             "rules": [
@@ -191,7 +190,7 @@ def generate_profile(name, servers_chunk):
                 },
                 {
                     "type": "field",
-                    "inboundTag": ["socks", "http"], # Привязка к Inbounds как в эталоне
+                    "inboundTag": ["socks", "http"], 
                     "network": "tcp,udp",
                     "balancerTag": "best_ping_balancer"
                 }
@@ -221,7 +220,7 @@ def main():
         except: continue
 
     final_json_array = []
-    # ЧАНКИ ТЕПЕРЬ ПО 10 СЕРВЕРОВ!
+    
     for i in range(0, len(ru_links), 10):
         profile = generate_profile(f"🇲🇦 🗽 LTE RU {(i // 10) + 1} | t.me/telegaproxys", ru_links[i:i + 10])
         if profile: final_json_array.append(profile)
