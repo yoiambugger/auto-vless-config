@@ -5,11 +5,16 @@ import re
 import base64
 import time
 
+# --- ТВОИ НАСТРОЙКИ ---
+# Твой личный файл с резервными EU серверами
+RESERVE_SOURCE = "https://raw.githubusercontent.com/yoiambugger/auto-vless-config/refs/heads/main/reserve.txt" 
+
 SOURCES = [
     "https://raw.githubusercontent.com/luxxuria/harvester/refs/heads/main/top_600.txt",
     "https://raw.githubusercontent.com/zieng2/wl/refs/heads/main/vless_universal.txt",
     "https://raw.githubusercontent.com/lm705/vair/refs/heads/main/vless_alive.txt"
 ]
+# ----------------------
 
 def get_links_from_text(text):
     decoded = ""
@@ -114,7 +119,7 @@ def generate_profile(name, servers_chunk):
     outbounds.append({"tag": "direct", "protocol": "freedom"})
     outbounds.append({"tag": "block", "protocol": "blackhole"})
 
-    return {
+    profile = {
         "remarks": name,
         "dns": {
             "servers": ["https://8.8.8.8/dns-query", "https://8.8.8.8/dns-query"],
@@ -142,22 +147,9 @@ def generate_profile(name, servers_chunk):
             "loglevel": "warning"
         },
         "outbounds": outbounds,
-        "observatory": {
-            "enableConcurrency": True,
-            "probeInterval": "1m",
-            "probeUrl": "https://www.google.com/generate_204",
-            "subjectSelector": tags 
-        },
         "routing": {
             "domainMatcher": "hybrid",
             "domainStrategy": "IPIfNonMatch",
-            "balancers": [
-                {
-                    "tag": "best_ping_balancer",
-                    "selector": tags, 
-                    "strategy": {"type": "leastPing"} 
-                }
-            ],
             "rules": [
                 {"type": "field", "protocol": ["bittorrent"], "outboundTag": "direct"},
                 {
@@ -187,18 +179,63 @@ def generate_profile(name, servers_chunk):
                         "domain:tracker-api.vk-analytics.ru"
                     ],
                     "outboundTag": "direct"
-                },
-                {
-                    "type": "field",
-                    "inboundTag": ["socks", "http"], 
-                    "network": "tcp,udp",
-                    "balancerTag": "best_ping_balancer"
                 }
             ]
         }
     }
 
+    # Если серверов больше 1 - включаем балансировщик и обсерваторию
+    if len(tags) > 1:
+        profile["observatory"] = {
+            "enableConcurrency": True,
+            "probeInterval": "1m",
+            "probeUrl": "https://www.google.com/generate_204",
+            "subjectSelector": tags 
+        }
+        profile["routing"]["balancers"] = [
+            {
+                "tag": "best_ping_balancer",
+                "selector": tags, 
+                "strategy": {"type": "leastPing"} 
+            }
+        ]
+        profile["routing"]["rules"].append({
+            "type": "field",
+            "inboundTag": ["socks", "http"], 
+            "network": "tcp,udp",
+            "balancerTag": "best_ping_balancer"
+        })
+    # Если сервер ровно 1 - пускаем трафик напрямую через него
+    else:
+        profile["routing"]["rules"].append({
+            "type": "field",
+            "inboundTag": ["socks", "http"], 
+            "network": "tcp,udp",
+            "outboundTag": tags[0] # Указывает на единственный узел
+        })
+
+    return profile
+
 def main():
+    final_json_array = []
+    reserve_links = []
+
+    # 1. Парсим твой личный резервный файл
+    try:
+        r_res = requests.get(RESERVE_SOURCE, timeout=10)
+        if r_res.status_code == 200:
+            reserve_links = get_links_from_text(r_res.text)
+            reserve_links = list(set(reserve_links)) # убираем возможные дубликаты
+    except:
+        pass
+
+    # Создаем резервный профиль (он встанет в самый верх списка)
+    if reserve_links:
+        reserve_profile = generate_profile("🇲🇦 🗽 LTE EU Резерв | t.me/telegaproxys", reserve_links)
+        if reserve_profile:
+            final_json_array.append(reserve_profile)
+
+    # 2. Парсим основные публичные источники
     raw_links = []
     for url in SOURCES:
         try:
@@ -207,6 +244,10 @@ def main():
         except: pass
 
     raw_links = list(set(raw_links))
+    
+    # Убираем твои резервные ссылки из общего пула, чтобы они не дублировались ниже
+    raw_links = [link for link in raw_links if link not in reserve_links]
+
     ip_map = batch_check_locations(raw_links)
     
     ru_links = []
@@ -219,12 +260,12 @@ def main():
             else: eu_links.append(link)
         except: continue
 
-    final_json_array = []
-    
+    # 3. Генерируем обычные RU сборки
     for i in range(0, len(ru_links), 10):
         profile = generate_profile(f"🇲🇦 🗽 LTE RU {(i // 10) + 1} | t.me/telegaproxys", ru_links[i:i + 10])
         if profile: final_json_array.append(profile)
 
+    # 4. Генерируем обычные EU сборки
     for i in range(0, len(eu_links), 10):
         profile = generate_profile(f"🇲🇦 🗽 LTE EU {(i // 10) + 1} | t.me/telegaproxys", eu_links[i:i + 10])
         if profile: final_json_array.append(profile)
@@ -234,3 +275,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
